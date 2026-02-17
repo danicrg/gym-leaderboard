@@ -23,9 +23,18 @@ AUTH_TOKEN = os.environ.get("KAYA_TOKEN")
 
 headers = {
     'accept': '*/*',
-    'authorization': f'Bearer {AUTH_TOKEN}',
+    'accept-language': 'en-US,en;q=0.9',
+    'authorization': 'Bearer {AUTH_TOKEN}',
     'content-type': 'application/json',
     'origin': 'https://kaya-app.kayaclimb.com',
+    'priority': 'u=1, i',
+    'referer': 'https://kaya-app.kayaclimb.com/',
+    'sec-ch-ua': '"Not(A:Brand";v="8", "Chromium";v="144"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"macOS"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site',
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
 }
 
