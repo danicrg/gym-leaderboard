@@ -234,7 +234,8 @@
                 } else {
                     leaderboardData = jsonResponse.leaderboard;
                     // Clean up the date string if needed
-                    dateSpan.textContent = jsonResponse.metadata.generated_at;
+                    const d = new Date(jsonResponse.metadata.generated_at);
+                    dateSpan.textContent = d.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
                 }
 
                 if (!leaderboardData || leaderboardData.length === 0) {
