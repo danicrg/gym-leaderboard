@@ -2,29 +2,38 @@ import requests
 import json
 import os
 import math
+import time
+import random
 from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
+
+# 1. Load Environment Variables
+load_dotenv()
 
 # --- CONFIGURATION ---
 CONSTANTS = {
     'BASE_POINTS_V0': 1000,
     'POINTS_PER_GRADE': 100,
-    'DECAY_FACTOR': 0.8,
-    'ELASTICITY': 0.5,
-    'SCARCITY_WEIGHT': 50,
-    'ITERATIONS': 5,
-    'DAYS_WINDOW': 30
+    'DECAY_FACTOR': 0.8,      
+    'ELASTICITY': 0.5,        
+    'SCARCITY_WEIGHT': 50,    
+    'ITERATIONS': 5,          
+    'DAYS_WINDOW': 30         
 }
 
 DATA_FILE = 'data/raw_ascents.json'
 LEADERBOARD_FILE = 'data/leaderboard.json'
 
-# Get token from GitHub Secrets
+# Get token securely
 AUTH_TOKEN = os.environ.get("KAYA_TOKEN")
+if not AUTH_TOKEN:
+    raise ValueError("No KAYA_TOKEN found! Check your .env file or GitHub Secrets.")
 
+# --- NETWORK CONFIGURATION (EXACT FROM YOUR SCRIPT) ---
 headers = {
     'accept': '*/*',
     'accept-language': 'en-US,en;q=0.9',
-    'authorization': 'Bearer {AUTH_TOKEN}',
+    'authorization': f'Bearer {AUTH_TOKEN}', # Injected securely
     'content-type': 'application/json',
     'origin': 'https://kaya-app.kayaclimb.com',
     'priority': 'u=1, i',
@@ -37,6 +46,11 @@ headers = {
     'sec-fetch-site': 'same-site',
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
 }
+
+# The Massive Query String
+GRAPHQL_QUERY = 'query webAscentsForGym($gym_id: ID!, $count: Int!, $offset: Int!) {\n  webAscentsForGym(gym_id: $gym_id, count: $count, offset: $offset) {\n    ...WebAscentFields\n    __typename\n  }\n}\n\nfragment WebAscentFields on WebAscent {\n  id\n  user {\n    ...WebUserFields\n    __typename\n  }\n  climb {\n    ...WebClimbBasicFields\n    __typename\n  }\n  date\n  comment\n  rating\n  stiffness\n  grade {\n    ...GradeFields\n    __typename\n  }\n  photo {\n    photo_url\n    thumb_url\n    __typename\n  }\n  video {\n    video_url\n    thumb_url\n    __typename\n  }\n  __typename\n}\n\nfragment WebUserFields on WebUser {\n  id\n  username\n  fname\n  lname\n  photo_url\n  is_private\n  bio\n  height\n  ape_index\n  limit_grade_bouldering {\n    name\n    id\n    __typename\n  }\n  limit_grade_routes {\n    name\n    id\n    __typename\n  }\n  is_premium\n  __typename\n}\n\nfragment WebClimbBasicFields on WebClimb {\n  slug\n  name\n  rating\n  ascent_count\n  grade {\n    name\n    id\n    __typename\n  }\n  climb_type {\n    name\n    __typename\n  }\n  color {\n    name\n    __typename\n  }\n  gym {\n    name\n    __typename\n  }\n  board {\n    name\n    __typename\n  }\n  destination {\n    name\n    __typename\n  }\n  area {\n    name\n    __typename\n  }\n  is_gb_moderated\n  is_access_sensitive\n  is_closed\n  is_offensive\n  __typename\n}\n\nfragment GradeFields on Grade {\n  id\n  name\n  climb_type_id\n  grade_type_id\n  ordering\n  mapped_grade_ids\n  climb_type_group\n  __typename\n}\n'
+
+# --- HELPER FUNCTIONS ---
 
 def parse_grade_to_points(grade_str):
     if not grade_str: return CONSTANTS['BASE_POINTS_V0']
@@ -52,6 +66,8 @@ def calculate_scarcity_bonus(ascent_count):
     if ascent_count <= 0: return 0
     return CONSTANTS['SCARCITY_WEIGHT'] * (1 / math.log(ascent_count + 1.1))
 
+# --- CORE CLASSES ---
+
 class KayaRanker:
     def __init__(self, data):
         self.raw_data = data
@@ -65,8 +81,8 @@ class KayaRanker:
         return self._generate_leaderboard()
 
     def _preprocess_data(self):
-        # Filter for strict 30 day window
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=CONSTANTS['DAYS_WINDOW'])
+        print(f"Filtering ranking window since: {cutoff_date.date()}")
         
         for entry in self.raw_data:
             try:
@@ -113,7 +129,6 @@ class KayaRanker:
     def _iterative_solve(self):
         VOLUME_FACTOR = 0.1 
         for _ in range(CONSTANTS['ITERATIONS']):
-            # Update Climbs
             for cid, climb in self.climbs.items():
                 sender_ids = climb['senders']
                 if not sender_ids: continue
@@ -122,7 +137,6 @@ class KayaRanker:
                 diff = avg_user_rating - climb['base_rating']
                 climb['current_rating'] = climb['base_rating'] + (CONSTANTS['ELASTICITY'] * diff) + scarcity
 
-            # Update Users
             for uid, user in self.users.items():
                 user_sends_scores = [self.climbs[cid]['current_rating'] for cid in user['sends']]
                 user_sends_scores.sort(reverse=True)
@@ -148,8 +162,53 @@ class KayaRanker:
             row['rank'] = i + 1
         return leaderboard
 
-def fetch_new_data(latest_stored_date):
-    """Fetches only data newer than what we have."""
+# --- SCRAPING LOGIC (EXACT REPLICA) ---
+
+def get_data_batch(offset, max_retries=20):
+    """Exact logic from original script for a single batch."""
+    json_data = {
+        'operationName': 'webAscentsForGym',
+        'variables': {
+            'gym_id': '51',
+            'offset': offset,
+            'count': 15,
+        },
+        'query': GRAPHQL_QUERY,
+    }
+
+    # Retry Loop
+    for attempt in range(max_retries):
+        try:
+            response = requests.post('https://kaya-beta.kayaclimb.com/graphql', headers=headers, json=json_data)
+            
+            # 1. Check valid HTTP Status
+            response.raise_for_status() 
+            
+            # 2. Parse JSON
+            res_json = response.json()
+
+            # 3. Check for GraphQL specific errors
+            if 'errors' in res_json or res_json.get('data') is None:
+                raise ValueError(f"GraphQL Error: {res_json.get('errors')}")
+
+            return res_json['data']['webAscentsForGym']
+
+        except Exception as e:
+            if attempt == max_retries - 1:
+                print(f"\nFailed offset {offset} after {max_retries} attempts.")
+                print(f"Error: {e}")
+                return []
+
+            # Exponential Backoff with Jitter
+            sleep_time = (2 ** attempt) + random.uniform(0, 1)
+            print(f"Error at offset {offset}. Retrying in {sleep_time:.2f}s... (Attempt {attempt + 1}/{max_retries})")
+            time.sleep(sleep_time)
+    return []
+
+def fetch_incremental_data(latest_stored_date):
+    """
+    Loops using get_data_batch until it hits data we already have.
+    """
     new_data = []
     offset = 0
     keep_fetching = True
@@ -157,69 +216,70 @@ def fetch_new_data(latest_stored_date):
     print(f"Fetching data newer than: {latest_stored_date}")
 
     while keep_fetching:
-        query = {
-            'operationName': 'webAscentsForGym',
-            'variables': {'gym_id': '51', 'offset': offset, 'count': 50},
-            'query': 'query webAscentsForGym($gym_id: ID!, $count: Int!, $offset: Int!) {\n  webAscentsForGym(gym_id: $gym_id, count: $count, offset: $offset) {\n    id\n    date\n    user {\n      id\n      username\n      fname\n      lname\n    }\n    climb {\n      slug\n      name\n      grade {\n        name\n      }\n    }\n  }\n}\n'
-        }
+        # Use the exact logic from the provided script
+        batch = get_data_batch(offset)
         
-        try:
-            response = requests.post('https://kaya-beta.kayaclimb.com/graphql', headers=headers, json=query)
-            response.raise_for_status()
-            batch = response.json().get('data', {}).get('webAscentsForGym', [])
+        if not batch:
+            break
             
-            if not batch: break
-            
-            for item in batch:
-                # Basic check to see if we reached old data
-                # Note: This relies on API returning reverse chron. If not, remove this check and fetch all.
-                item_date = item['date']
-                if latest_stored_date and item_date <= latest_stored_date:
-                    keep_fetching = False
-                else:
-                    new_data.append(item)
-            
-            offset += 50
-            if offset > 2000: break # Safety break
-            
-        except Exception as e:
-            print(f"Error: {e}")
+        for item in batch:
+            item_date = item['date']
+            # If we hit a date older or equal to our last stored date, stop.
+            if latest_stored_date and item_date <= latest_stored_date:
+                keep_fetching = False
+            else:
+                new_data.append(item)
+        
+        if not keep_fetching:
+            print("Reached existing data. Stopping fetch.")
+            break
+
+        offset += 15 # Increment by 15 as per original script
+        print(f"Fetched offset {offset}...")
+        
+        # Safety break to prevent infinite loops if something goes wrong with dates
+        if offset > 10000: 
+            print("Safety limit reached.")
             break
             
     return new_data
 
+# --- MAIN EXECUTION ---
+
 def main():
     # 1. Load Existing Raw Data
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            all_ascents = json.load(f)
+        try:
+            with open(DATA_FILE, 'r') as f:
+                all_ascents = json.load(f)
+        except json.JSONDecodeError:
+            all_ascents = []
     else:
         all_ascents = []
 
-    # 2. Determine Latest Date
+    # 2. Determine Latest Date in current file
     latest_date = None
     if all_ascents:
-        # Sort to ensure we find the absolute latest
         all_ascents.sort(key=lambda x: x['date'], reverse=True)
         latest_date = all_ascents[0]['date']
 
-    # 3. Fetch Updates
-    new_ascents = fetch_new_data(latest_date)
+    # 3. Fetch Updates (Incremental)
+    new_ascents = fetch_incremental_data(latest_date)
     print(f"Fetched {len(new_ascents)} new ascents.")
     
     # 4. Merge and Deduplicate
-    # Use ID as key to prevent duplicates
     ascent_map = {x['id']: x for x in all_ascents}
     for x in new_ascents:
         ascent_map[x['id']] = x
     
     final_data = list(ascent_map.values())
     
-    # 5. Clean up old data (optional: remove data older than 60 days to keep file size down)
+    # 5. Clean up old data (keep last 60 days to reduce file size)
     cleanup_date = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
-    final_data = [x for x in final_data if x['date'] > cleanup_date]
+    # Normalize date comparison (handle Z vs +00:00)
+    final_data = [x for x in final_data if x['date'].replace('Z', '+00:00') > cleanup_date]
 
-    # Save Raw Data
+    # Save Updated Raw Data
     os.makedirs('data', exist_ok=True)
     with open(DATA_FILE, 'w') as f:
         json.dump(final_data, f)
@@ -228,32 +288,30 @@ def main():
     ranker = KayaRanker(final_data)
     current_leaderboard = ranker.run()
 
-    # 7. Compare with Yesterday's Leaderboard
+    # 7. Compare with Yesterday's Leaderboard (for arrows)
+    old_ranks = {}
     if os.path.exists(LEADERBOARD_FILE):
-        with open(LEADERBOARD_FILE, 'r') as f:
-            old_leaderboard = json.load(f)
-        
-        # Map username -> old_rank
-        old_ranks = {x['username']: x['rank'] for x in old_leaderboard}
-    else:
-        old_ranks = {}
+        try:
+            with open(LEADERBOARD_FILE, 'r') as f:
+                old_leaderboard = json.load(f)
+            old_ranks = {x['username']: x['rank'] for x in old_leaderboard}
+        except:
+            pass
 
-    # Add movement data
     for row in current_leaderboard:
         username = row['username']
         if username in old_ranks:
             prev = old_ranks[username]
             curr = row['rank']
-            # If I was 5 and now I am 3, movement is +2 (Good)
             row['movement'] = prev - curr 
         else:
             row['movement'] = 'NEW'
 
-    # 8. Save Leaderboard
+    # 8. Save Final Leaderboard
     with open(LEADERBOARD_FILE, 'w') as f:
         json.dump(current_leaderboard, f)
     
-    print("Update Complete.")
+    print("Leaderboard updated successfully.")
 
 if __name__ == "__main__":
     main()
