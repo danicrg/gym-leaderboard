@@ -59,7 +59,7 @@
         
         try {
             // 1. Try to fetch the file
-            const response = await fetch('data/leaderboard.json');
+            const response = await fetch(`data/leaderboard.json?t=${new Date().getTime()}`);
             
             // 2. Check if file exists (404 error)
             if (!response.ok) {
