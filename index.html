@@ -105,7 +105,7 @@
 
             tbody.innerHTML = '';
 
-            leaderboardData.slice(0, 50).forEach(row => {
+            leaderboardData.forEach(row => {
                 const tr = document.createElement('tr');
                 
                 let moveHtml = '<span class="move-same">-</span>';
