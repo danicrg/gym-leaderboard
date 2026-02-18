@@ -16,7 +16,6 @@ The scoring system is designed around one principle: **peak ability matters more
 ├── index.html          # Leaderboard frontend
 ├── methodology.html    # Scoring methodology explainer
 ├── update.py           # Daily update script (scrape + rank + save)
-├── kaya.py             # Standalone scraper / ranker (interactive use)
 ├── data/
 │   ├── raw_ascents.json    # Cached ascent data (last 60 days)
 │   └── leaderboard.json    # Current leaderboard output
