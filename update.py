@@ -307,9 +307,17 @@ def main():
         else:
             row['movement'] = 'NEW'
 
-    # 8. Save Final Leaderboard
+    # 8. Save Leaderboard with Metadata
+    # We create a new structure to hold the date AND the list
+    output_data = {
+        "metadata": {
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        },
+        "leaderboard": current_leaderboard
+    }
+
     with open(LEADERBOARD_FILE, 'w') as f:
-        json.dump(current_leaderboard, f)
+        json.dump(output_data, f)
     
     print("Leaderboard updated successfully.")
 

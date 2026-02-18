@@ -7,7 +7,7 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 20px; }
         .container { max_width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
         .subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 20px; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -16,6 +16,10 @@
         
         .rank-col { width: 60px; text-align: center; font-weight: bold; }
         .score-col { font-family: monospace; font-weight: bold; color: #2c3e50; }
+        
+        /* Links */
+        a.profile-link { text-decoration: none; color: #2980b9; font-weight: 600; }
+        a.profile-link:hover { text-decoration: underline; color: #1c5980; }
         
         .move-up { color: #27ae60; font-weight: bold; font-size: 0.9em; }
         .move-down { color: #c0392b; font-weight: bold; font-size: 0.9em; }
@@ -33,7 +37,9 @@
 
 <div class="container">
     <h1>Gym Leaderboard</h1>
-    <div class="subtitle">Rolling 30-Day Window • Updates Daily</div>
+    <div class="subtitle">
+        Rolling 30-Day Window • Last Update: <span id="last-updated">Loading...</span>
+    </div>
 
     <div id="error-msg"></div>
 
@@ -56,26 +62,40 @@
 <script>
     async function loadLeaderboard() {
         const errorDiv = document.getElementById('error-msg');
+        const tbody = document.querySelector('#leaderboard tbody');
+        const dateSpan = document.getElementById('last-updated');
         
         try {
-            // 1. Try to fetch the file
-            const response = await fetch(`data/leaderboard.json?t=${new Date().getTime()}`);
+            // Force fresh fetch with timestamp
+            const url = `data/leaderboard.json?t=${new Date().getTime()}`;
+            const response = await fetch(url);
             
-            // 2. Check if file exists (404 error)
-            if (!response.ok) {
-                throw new Error(`Could not find data file (Status: ${response.status}). <br>If this is a new repo, the Action may not have run yet.`);
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+            const jsonResponse = await response.json();
+
+            // Handle the new JSON structure
+            // If the python script hasn't run yet, it might still be an array, so we check
+            let leaderboardData = [];
+            
+            if (Array.isArray(jsonResponse)) {
+                // Old format fallback
+                leaderboardData = jsonResponse;
+                dateSpan.textContent = "Unknown";
+            } else {
+                // New format
+                leaderboardData = jsonResponse.leaderboard;
+                dateSpan.textContent = jsonResponse.metadata.generated_at;
             }
 
-            const data = await response.json();
-            const tbody = document.querySelector('#leaderboard tbody');
-
-            // 3. Check if data is empty
-            if (!data || data.length === 0) {
-                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">No data found in JSON.</td></tr>';
+            if (!leaderboardData || leaderboardData.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">No data found.</td></tr>';
                  return;
             }
 
-            data.slice(0, 50).forEach(row => {
+            tbody.innerHTML = '';
+
+            leaderboardData.slice(0, 50).forEach(row => {
                 const tr = document.createElement('tr');
                 
                 let moveHtml = '<span class="move-same">-</span>';
@@ -87,10 +107,15 @@
                     moveHtml = `<span class="move-down">▼ ${Math.abs(row.movement)}</span>`;
                 }
 
+                // Create the profile link
+                const profileUrl = `https://kaya-app.kayaclimb.com/user/${row.username}`;
+
                 tr.innerHTML = `
                     <td class="rank-col">#${row.rank}</td>
                     <td>
-                        <div>${row.name}</div>
+                        <div>
+                            <a href="${profileUrl}" target="_blank" class="profile-link">${row.name}</a>
+                        </div>
                         <div style="font-size:0.8em; color:#888">@${row.username}</div>
                     </td>
                     <td class="score-col">${row.score}</td>
@@ -101,9 +126,9 @@
                 tbody.appendChild(tr);
             });
         } catch (error) {
-            console.error('Full Error:', error);
+            console.error(error);
             errorDiv.style.display = 'block';
-            errorDiv.innerHTML = `<strong>Error Loading Leaderboard:</strong><br>${error.message}`;
+            errorDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
         }
     }
 
