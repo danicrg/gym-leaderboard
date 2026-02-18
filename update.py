@@ -4,8 +4,21 @@ import os
 import math
 import time
 import random
+import logging
+import sys
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    stream=sys.stdout,
+)
+# Force unbuffered output so GitHub Actions shows logs in real-time
+sys.stdout.reconfigure(line_buffering=True)
+
+log = logging.getLogger("update")
 
 # 1. Load Environment Variables
 load_dotenv()
@@ -28,6 +41,7 @@ LEADERBOARD_FILE = 'data/leaderboard.json'
 AUTH_TOKEN = os.environ.get("KAYA_TOKEN")
 if not AUTH_TOKEN:
     raise ValueError("No KAYA_TOKEN found! Check your .env file or GitHub Secrets.")
+log.info("KAYA_TOKEN loaded (length=%d)", len(AUTH_TOKEN))
 
 # --- NETWORK CONFIGURATION (EXACT FROM YOUR SCRIPT) ---
 headers = {
@@ -82,7 +96,7 @@ class KayaRanker:
 
     def _preprocess_data(self):
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=CONSTANTS['DAYS_WINDOW'])
-        print(f"Filtering ranking window since: {cutoff_date.date()}")
+        log.info("Filtering ranking window since: %s", cutoff_date.date())
         
         for entry in self.raw_data:
             try:
@@ -121,6 +135,9 @@ class KayaRanker:
                     'senders': set()
                 }
             self.climbs[cid]['senders'].add(uid)
+
+        log.info("Preprocessed: %d users, %d climbs from %d raw entries",
+                 len(self.users), len(self.climbs), len(self.raw_data))
 
     def _initialize_ratings(self):
         for uid, user in self.users.items():
@@ -180,8 +197,8 @@ def get_data_batch(offset, max_retries=20):
     for attempt in range(max_retries):
         try:
             response = requests.post('https://kaya-beta.kayaclimb.com/graphql', headers=headers, json=json_data)
-            
-            # 1. Check valid HTTP Status
+            log.debug("POST offset=%d -> HTTP %d (%.0fms)", offset, response.status_code,
+                       response.elapsed.total_seconds() * 1000)
             response.raise_for_status() 
             
             # 2. Parse JSON
@@ -195,13 +212,12 @@ def get_data_batch(offset, max_retries=20):
 
         except Exception as e:
             if attempt == max_retries - 1:
-                print(f"\nFailed offset {offset} after {max_retries} attempts.")
-                print(f"Error: {e}")
+                log.error("Failed offset %d after %d attempts: %s", offset, max_retries, e)
                 return []
 
-            # Exponential Backoff with Jitter
             sleep_time = (2 ** attempt) + random.uniform(0, 1)
-            print(f"Error at offset {offset}. Retrying in {sleep_time:.2f}s... (Attempt {attempt + 1}/{max_retries})")
+            log.warning("Error at offset %d (attempt %d/%d): %s — retrying in %.2fs",
+                        offset, attempt + 1, max_retries, e, sleep_time)
             time.sleep(sleep_time)
     return []
 
@@ -212,49 +228,57 @@ def fetch_incremental_data(latest_stored_date):
     new_data = []
     offset = 0
     keep_fetching = True
+    fetch_start = time.monotonic()
     
-    print(f"Fetching data newer than: {latest_stored_date}")
+    log.info("Starting incremental fetch — looking for data newer than: %s", latest_stored_date)
 
     while keep_fetching:
-        # Use the exact logic from the provided script
         batch = get_data_batch(offset)
         
         if not batch:
+            log.info("Empty batch at offset %d — ending fetch", offset)
             break
+        
+        log.info("Got %d items at offset %d", len(batch), offset)
             
         for item in batch:
             item_date = item['date']
-            # If we hit a date older or equal to our last stored date, stop.
             if latest_stored_date and item_date <= latest_stored_date:
                 keep_fetching = False
             else:
                 new_data.append(item)
         
         if not keep_fetching:
-            print("Reached existing data. Stopping fetch.")
+            log.info("Reached existing data at offset %d — stopping fetch", offset)
             break
 
-        offset += 15 # Increment by 15 as per original script
-        print(f"Fetched offset {offset}...")
+        offset += 15
         
-        # Safety break to prevent infinite loops if something goes wrong with dates
         if offset > 10000: 
-            print("Safety limit reached.")
+            log.warning("Safety limit reached at offset %d — aborting fetch", offset)
             break
-            
+    
+    elapsed = time.monotonic() - fetch_start
+    log.info("Fetch complete: %d new items in %.1fs", len(new_data), elapsed)
     return new_data
 
 # --- MAIN EXECUTION ---
 
 def main():
+    run_start = time.monotonic()
+    log.info("=== Leaderboard update started ===")
+
     # 1. Load Existing Raw Data
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, 'r') as f:
                 all_ascents = json.load(f)
+            log.info("Loaded %d existing ascents from %s", len(all_ascents), DATA_FILE)
         except json.JSONDecodeError:
+            log.warning("Failed to parse %s — starting fresh", DATA_FILE)
             all_ascents = []
     else:
+        log.info("No existing data file at %s — starting fresh", DATA_FILE)
         all_ascents = []
 
     # 2. Determine Latest Date in current file
@@ -262,31 +286,38 @@ def main():
     if all_ascents:
         all_ascents.sort(key=lambda x: x['date'], reverse=True)
         latest_date = all_ascents[0]['date']
+    log.info("Latest stored date: %s", latest_date or "(none)")
 
     # 3. Fetch Updates (Incremental)
     new_ascents = fetch_incremental_data(latest_date)
-    print(f"Fetched {len(new_ascents)} new ascents.")
+    log.info("Fetched %d new ascents", len(new_ascents))
     
     # 4. Merge and Deduplicate
+    before_merge = len(all_ascents)
     ascent_map = {x['id']: x for x in all_ascents}
     for x in new_ascents:
         ascent_map[x['id']] = x
     
     final_data = list(ascent_map.values())
+    log.info("Merged: %d existing + %d new = %d unique ascents", before_merge, len(new_ascents), len(final_data))
     
     # 5. Clean up old data (keep last 60 days to reduce file size)
     cleanup_date = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
-    # Normalize date comparison (handle Z vs +00:00)
+    pre_cleanup = len(final_data)
     final_data = [x for x in final_data if x['date'].replace('Z', '+00:00') > cleanup_date]
+    log.info("Cleanup: removed %d ascents older than 60 days, %d remaining", pre_cleanup - len(final_data), len(final_data))
 
     # Save Updated Raw Data
     os.makedirs('data', exist_ok=True)
     with open(DATA_FILE, 'w') as f:
         json.dump(final_data, f)
+    log.info("Saved raw data to %s", DATA_FILE)
 
     # 6. Calculate Current Leaderboard
+    log.info("Running ranking algorithm...")
     ranker = KayaRanker(final_data)
     current_leaderboard = ranker.run()
+    log.info("Ranking complete: %d users on leaderboard", len(current_leaderboard))
 
     # 7. Compare with Yesterday's Leaderboard (for arrows)
     old_ranks = {}
@@ -295,9 +326,13 @@ def main():
             with open(LEADERBOARD_FILE, 'r') as f:
                 old_leaderboard = json.load(f)
             old_ranks = {x['username']: x['rank'] for x in old_leaderboard}
-        except:
-            pass
+            log.info("Loaded previous leaderboard with %d entries for movement comparison", len(old_ranks))
+        except Exception as e:
+            log.warning("Could not load previous leaderboard: %s", e)
+    else:
+        log.info("No previous leaderboard file — all entries will be marked NEW")
 
+    new_count = 0
     for row in current_leaderboard:
         username = row['username']
         if username in old_ranks:
@@ -306,9 +341,10 @@ def main():
             row['movement'] = prev - curr 
         else:
             row['movement'] = 'NEW'
+            new_count += 1
+    log.info("Movement: %d new entries, %d returning", new_count, len(current_leaderboard) - new_count)
 
     # 8. Save Leaderboard with Metadata
-    # We create a new structure to hold the date AND the list
     output_data = {
         "metadata": {
             "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -319,7 +355,12 @@ def main():
     with open(LEADERBOARD_FILE, 'w') as f:
         json.dump(output_data, f)
     
-    print("Leaderboard updated successfully.")
+    elapsed = time.monotonic() - run_start
+    log.info("Saved leaderboard to %s", LEADERBOARD_FILE)
+    if current_leaderboard:
+        log.info("Top 3: %s",
+                 ", ".join(f"#{r['rank']} {r['name']} ({r['score']}pts)" for r in current_leaderboard[:3]))
+    log.info("=== Leaderboard update finished in %.1fs ===", elapsed)
 
 if __name__ == "__main__":
     main()
