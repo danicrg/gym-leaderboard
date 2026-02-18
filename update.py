@@ -314,8 +314,9 @@ def main():
     if os.path.exists(LEADERBOARD_FILE):
         try:
             with open(LEADERBOARD_FILE, 'r') as f:
-                old_leaderboard = json.load(f)
-            old_ranks = {x['username']: x['rank'] for x in old_leaderboard}
+                old_data = json.load(f)
+            entries = old_data.get('leaderboard', old_data) if isinstance(old_data, dict) else old_data
+            old_ranks = {x['username']: x['rank'] for x in entries}
             log.info("Loaded previous leaderboard with %d entries for movement comparison", len(old_ranks))
         except Exception as e:
             log.warning("Could not load previous leaderboard: %s", e)
