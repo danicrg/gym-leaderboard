@@ -18,13 +18,21 @@
         .score-col { font-family: monospace; font-weight: bold; color: #2c3e50; }
         
         /* Links */
-        a.profile-link { text-decoration: none; color: #2980b9; font-weight: 600; }
-        a.profile-link:hover { text-decoration: underline; color: #1c5980; }
+        a { text-decoration: none; color: #2980b9; }
+        a:hover { text-decoration: underline; }
+
+        a.profile-link { font-weight: 600; color: #2980b9; }
+        a.profile-link:hover { color: #1c5980; }
         
+        /* Movement Indicators */
         .move-up { color: #27ae60; font-weight: bold; font-size: 0.9em; }
         .move-down { color: #c0392b; font-weight: bold; font-size: 0.9em; }
         .move-same { color: #bdc3c7; font-size: 0.9em; }
         .move-new { color: #f39c12; font-size: 0.8em; font-weight: bold; background: #fff3cd; padding: 2px 6px; border-radius: 4px; }
+        
+        /* Footer */
+        .footer { text-align: center; margin-top: 40px; font-size: 0.8em; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+        .footer a { color: #777; font-weight: bold; }
         
         #error-msg { color: red; text-align: center; padding: 20px; display: none; background: #ffeeee; border: 1px solid red; margin-top: 20px;}
 
@@ -38,7 +46,7 @@
 <div class="container">
     <h1>Gym Leaderboard</h1>
     <div class="subtitle">
-        Rolling 30-Day Window • Last Update: <span id="last-updated">Loading...</span>
+        Rolling 30-Day Window • Updated: <span id="last-updated">Loading...</span>
     </div>
 
     <div id="error-msg"></div>
@@ -57,6 +65,10 @@
         <tbody>
             </tbody>
     </table>
+
+    <div class="footer">
+        Created by <a href="https://github.com/danicrg" target="_blank">danicrg</a>
+    </div>
 </div>
 
 <script>
@@ -74,17 +86,15 @@
 
             const jsonResponse = await response.json();
 
-            // Handle the new JSON structure
-            // If the python script hasn't run yet, it might still be an array, so we check
             let leaderboardData = [];
             
+            // Handle both Old (Array) and New (Object) JSON formats safely
             if (Array.isArray(jsonResponse)) {
-                // Old format fallback
                 leaderboardData = jsonResponse;
                 dateSpan.textContent = "Unknown";
             } else {
-                // New format
                 leaderboardData = jsonResponse.leaderboard;
+                // Clean up the date string if needed
                 dateSpan.textContent = jsonResponse.metadata.generated_at;
             }
 
@@ -107,7 +117,6 @@
                     moveHtml = `<span class="move-down">▼ ${Math.abs(row.movement)}</span>`;
                 }
 
-                // Create the profile link
                 const profileUrl = `https://kaya-app.kayaclimb.com/user/${row.username}`;
 
                 tr.innerHTML = `
