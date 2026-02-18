@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoring Methodology — Dogpatch Boulders</title>
+    <style>
+        :root {
+            --text: #2c3e50;
+            --text-light: #666;
+            --text-muted: #999;
+            --accent: #2980b9;
+            --accent-hover: #1c5980;
+            --bg: #f4f4f9;
+            --surface: #fff;
+            --border: #eee;
+            --code-bg: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 48px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Navigation */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85em;
+            color: var(--accent);
+            text-decoration: none;
+            margin-bottom: 32px;
+        }
+
+        .back-link:hover {
+            color: var(--accent-hover);
+        }
+
+        .back-link svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 1.75em;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 4px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            color: var(--text-light);
+            font-size: 0.95em;
+            margin: 0 0 40px 0;
+        }
+
+        h2 {
+            font-size: 1.15em;
+            font-weight: 600;
+            color: var(--text);
+            margin: 40px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h2 .step-num {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: var(--text);
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 0.75em;
+            margin-right: 8px;
+            vertical-align: middle;
+            position: relative;
+            top: -1px;
+        }
+
+        h3 {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--text);
+            margin: 24px 0 8px 0;
+        }
+
+        p {
+            margin: 0 0 16px 0;
+            color: var(--text-light);
+            font-size: 0.92em;
+        }
+
+        /* Formula blocks */
+        .formula {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin: 16px 0 20px 0;
+            font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+            font-size: 0.88em;
+            color: var(--text);
+            overflow-x: auto;
+            line-height: 1.8;
+        }
+
+        .formula .comment {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .formula .keyword {
+            color: #8250df;
+            font-weight: 600;
+        }
+
+        .formula .value {
+            color: #0550ae;
+        }
+
+        /* Constants table */
+        .constants-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 20px 0;
+            font-size: 0.88em;
+        }
+
+        .constants-table th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .constants-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-light);
+        }
+
+        .constants-table td:first-child {
+            font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+            font-size: 0.92em;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .constants-table td:nth-child(2) {
+            font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+            color: #0550ae;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .constants-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Callout */
+        .callout {
+            background: #f0f7ff;
+            border-left: 3px solid var(--accent);
+            padding: 14px 18px;
+            margin: 20px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.88em;
+            color: var(--text-light);
+        }
+
+        .callout strong {
+            color: var(--text);
+        }
+
+        /* Ordered reasoning list */
+        .reason-list {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0 20px 0;
+        }
+
+        .reason-list li {
+            padding: 6px 0 6px 24px;
+            position: relative;
+            font-size: 0.9em;
+            color: var(--text-light);
+        }
+
+        .reason-list li::before {
+            content: "—";
+            position: absolute;
+            left: 0;
+            color: var(--text-muted);
+        }
+
+        /* Divider */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 40px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 0.8em;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            margin-top: 48px;
+        }
+
+        .footer a {
+            color: #777;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                padding: 24px 18px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            h1 {
+                font-size: 1.4em;
+            }
+
+            .formula {
+                font-size: 0.8em;
+                padding: 12px 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <a href="index.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M9.78 4.22a.75.75 0 0 1 0 1.06L7.06 8l2.72 2.72a.75.75 0 1 1-1.06 1.06L5.47 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.75.75 0 0 1 1.06 0Z" />
+            </svg>
+            Back to Leaderboard
+        </a>
+
+        <h1>Scoring Methodology</h1>
+        <p class="page-subtitle">
+            How the Dogpatch Boulders leaderboard score is computed, and the reasoning behind each design decision.
+        </p>
+
+        <!-- Overview -->
+        <h2><span class="step-num">0</span> Overview</h2>
+        <p>
+            The ranking system uses an <strong>iterative, mutually-referential model</strong> inspired by algorithms
+            like PageRank. Climbers and climbs influence each other's ratings over multiple passes, producing scores
+            that reflect both difficulty and the strength of the field — not just raw grade numbers.
+        </p>
+        <p>
+            All data is scoped to a <strong>rolling 30-day window</strong>, keeping the leaderboard fresh and rewarding
+            consistent activity over historical accumulation.
+        </p>
+
+        <!-- Constants -->
+        <h2><span class="step-num">1</span> Constants</h2>
+        <p>
+            The system is governed by a small set of tunable parameters. These were chosen to balance grade
+            difficulty, volume, and rarity.
+        </p>
+        <table class="constants-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BASE_POINTS_V0</td>
+                    <td>1000</td>
+                    <td>Baseline score for a V0 send</td>
+                </tr>
+                <tr>
+                    <td>POINTS_PER_GRADE</td>
+                    <td>100</td>
+                    <td>Additive points per V-grade level</td>
+                </tr>
+                <tr>
+                    <td>ELASTICITY</td>
+                    <td>0.5</td>
+                    <td>How much sender strength shifts a climb's rating</td>
+                </tr>
+                <tr>
+                    <td>SCARCITY_WEIGHT</td>
+                    <td>50</td>
+                    <td>Maximum bonus for rarely-sent climbs</td>
+                </tr>
+                <tr>
+                    <td>VOLUME_FACTOR</td>
+                    <td>0.1</td>
+                    <td>Geometric decay per ranked send</td>
+                </tr>
+                <tr>
+                    <td>ITERATIONS</td>
+                    <td>5</td>
+                    <td>Convergence passes for the solver</td>
+                </tr>
+                <tr>
+                    <td>DAYS_WINDOW</td>
+                    <td>30</td>
+                    <td>Rolling time window in days</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Base Grade Points -->
+        <h2><span class="step-num">2</span> Base Grade Points</h2>
+        <p>
+            Every climb starts with a base score derived from its posted V-grade. This provides the initial
+            anchor before the iterative solver adjusts ratings.
+        </p>
+        <div class="formula">
+            <span class="keyword">base_points</span>(grade) = 1000 + (grade_number × 100)
+        </div>
+        <p>For example, a V6 climb starts at 1,600 points and a V10 at 2,000.</p>
+        <div class="callout">
+            <strong>Why linear?</strong> A linear scale keeps the model interpretable. A 100-point gap between grades
+            is large enough to matter but small enough that the iterative adjustments (step 4) can meaningfully
+            differentiate climbs within the same grade.
+        </div>
+
+        <!-- Scarcity Bonus -->
+        <h2><span class="step-num">3</span> Scarcity Bonus</h2>
+        <p>
+            Climbs with fewer ascents receive a bonus, rewarding climbers who send problems that few others have
+            completed. The bonus decays logarithmically — the first few ascents reduce the bonus steeply, then
+            it tapers off.
+        </p>
+        <div class="formula">
+            <span class="keyword">scarcity</span>(n) = 50 × (1 / ln(n + 1.1))
+            <br>
+            <span class="comment">where n = number of senders</span>
+        </div>
+        <ul class="reason-list">
+            <li>A climb with 1 sender yields ~<strong>33 bonus points</strong></li>
+            <li>A climb with 5 senders yields ~<strong>14 bonus points</strong></li>
+            <li>A climb with 50 senders yields ~<strong>3 bonus points</strong></li>
+        </ul>
+        <div class="callout">
+            <strong>Why logarithmic decay?</strong> The logarithm naturally compresses large ranges. A climb sent by
+            1 person vs. 2 should feel very different, but 50 vs. 51 should not. The log function captures this
+            diminishing-returns intuition without needing arbitrary cutoffs.
+        </div>
+
+        <!-- Iterative Solver -->
+        <h2><span class="step-num">4</span> Iterative Solver</h2>
+        <p>
+            This is the core of the system. Climb ratings and user ratings are <strong>mutually dependent</strong> — a
+            climb is harder if strong climbers sent it, and a climber is stronger if they sent hard climbs.
+            The solver alternates between updating these two quantities for 5 iterations, allowing them to converge.
+        </p>
+
+        <h3>Step A — Update Climb Ratings</h3>
+        <p>
+            Each climb's rating is recalculated using the average strength of its senders, blended with the
+            original base grade via the elasticity parameter.
+        </p>
+        <div class="formula">
+            <span class="keyword">climb_rating</span> = base_points + ε × (avg_sender_rating − base_points) + scarcity
+            <br>
+            <span class="comment">where ε = 0.5 (elasticity)</span>
+        </div>
+        <p>
+            If strong climbers (high rating) send a climb that was graded low, the climb's effective rating rises.
+            Conversely, if only weaker climbers send a "hard" grade, the climb's rating is pulled down. The
+            elasticity of 0.5 means the adjustment is a 50/50 blend between the posted grade and the empirical
+            signal.
+        </p>
+
+        <h3>Step B — Update User Ratings</h3>
+        <p>
+            A climber's score is computed as a <strong>weighted sum of their top sends</strong>, sorted by climb
+            rating descending. Each subsequent send is discounted geometrically.
+        </p>
+        <div class="formula">
+            <span class="keyword">user_score</span> = Σ (climb_rating<sub>i</sub> × 0.1<sup>i</sup>)
+            <span class="comment">&nbsp;&nbsp;for i = 0, 1, 2, … , 10</span>
+        </div>
+        <p>In practice, this means:</p>
+        <div class="formula">
+            score = <span class="value">1.0</span> × top_send
+            + <span class="value">0.1</span> × 2nd_send
+            + <span class="value">0.01</span> × 3rd_send
+            + <span class="value">0.001</span> × 4th_send + …
+        </div>
+
+        <div class="callout">
+            <strong>Why such aggressive decay?</strong> The 0.1 factor ensures that your score is dominated by your
+            hardest send. A climber who sends one V8 should rank higher than someone who sends twenty V4s.
+            The small residual from additional sends still rewards volume, but never enough to overtake a
+            meaningfully harder single send. This mirrors how the climbing community intuitively evaluates
+            ability — by peak performance, with volume as a tiebreaker.
+        </div>
+
+        <!-- Convergence -->
+        <h2><span class="step-num">5</span> Convergence</h2>
+        <p>
+            Steps A and B repeat for 5 iterations. In practice, scores stabilize within 3–4 passes. The mutual
+            adjustment means that:
+        </p>
+        <ul class="reason-list">
+            <li>A sandbagged grade (labeled easy but actually hard) gets corrected upward because strong climbers
+                send it</li>
+            <li>A soft grade (labeled hard but widely sent) gets corrected downward because many lower-rated
+                climbers complete it</li>
+            <li>Users who share ascents with other strong climbers benefit from the network effect</li>
+        </ul>
+
+        <!-- Movement Tracking -->
+        <h2><span class="step-num">6</span> Movement Tracking</h2>
+        <p>
+            Each time the leaderboard is regenerated, the system compares each climber's current rank against their
+            previous rank. The delta is displayed as a trend indicator:
+        </p>
+        <ul class="reason-list">
+            <li><strong style="color: #27ae60;">▲</strong> — Moved up in rank since last update</li>
+            <li><strong style="color: #c0392b;">▼</strong> — Moved down in rank since last update</li>
+            <li><strong style="color: #bdc3c7;">-</strong> — No change</li>
+            <li><strong style="color: #f39c12;">NEW</strong> — First appearance on the board</li>
+        </ul>
+
+        <hr class="divider">
+
+        <!-- Design Principles -->
+        <h2>Design Principles</h2>
+        <p>
+            Three principles guided the scoring design:
+        </p>
+        <ul class="reason-list">
+            <li><strong>Grade integrity</strong> — Your hardest send should matter most. Volume is a tiebreaker, not
+                a replacement for difficulty.</li>
+            <li><strong>Empirical correction</strong> — Posted grades are imperfect. The iterative solver uses the
+                community's sending patterns to surface the actual difficulty of each climb.</li>
+            <li><strong>Recency</strong> — A 30-day rolling window ensures the leaderboard reflects current form,
+                not historical achievement. Everyone starts fresh each month.</li>
+        </ul>
+
+        <div class="footer">
+            Created by <a href="https://github.com/danicrg" target="_blank">danicrg</a>
+        </div>
+
+    </div>
+</body>
+
+</html>
