@@ -12,7 +12,7 @@ from collections import defaultdict
 headers = {
     'accept': '*/*',
     'accept-language': 'en-US,en;q=0.9',
-    'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjI3NzUzLCJlbWFpbCI6ImNhcmxhbmRlci5kYW5pZWxAZ21haWwuY29tIiwiaWF0IjoxNzcxMzcxODI0LCJleHAiOjE3NzEzNzkwMjR9.77jsd1if182amzohNWHnhblno8I6T_zmNdVKG_khG8A',
+    'authorization': '',
     'content-type': 'application/json',
     'origin': 'https://kaya-app.kayaclimb.com',
     'priority': 'u=1, i',

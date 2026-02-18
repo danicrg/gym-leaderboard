@@ -7,7 +7,6 @@ import random
 import logging
 import sys
 from datetime import datetime, timedelta, timezone
-from dotenv import load_dotenv
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,9 +18,6 @@ logging.basicConfig(
 sys.stdout.reconfigure(line_buffering=True)
 
 log = logging.getLogger("update")
-
-# 1. Load Environment Variables
-load_dotenv()
 
 # --- CONFIGURATION ---
 CONSTANTS = {
@@ -37,17 +33,11 @@ CONSTANTS = {
 DATA_FILE = 'data/raw_ascents.json'
 LEADERBOARD_FILE = 'data/leaderboard.json'
 
-# Get token securely
-AUTH_TOKEN = os.environ.get("KAYA_TOKEN")
-if not AUTH_TOKEN:
-    raise ValueError("No KAYA_TOKEN found! Check your .env file or GitHub Secrets.")
-log.info("KAYA_TOKEN loaded (length=%d)", len(AUTH_TOKEN))
-
 # --- NETWORK CONFIGURATION (EXACT FROM YOUR SCRIPT) ---
 headers = {
     'accept': '*/*',
     'accept-language': 'en-US,en;q=0.9',
-    'authorization': f'Bearer {AUTH_TOKEN}', # Injected securely
+    'authorization': '',
     'content-type': 'application/json',
     'origin': 'https://kaya-app.kayaclimb.com',
     'priority': 'u=1, i',
