@@ -233,15 +233,11 @@
                     dateSpan.textContent = "Unknown";
                 } else {
                     leaderboardData = jsonResponse.leaderboard;
-                    // #region agent log
-                    fetch('http://127.0.0.1:7841/ingest/5de5ab01-2120-4d42-978e-ebc7375e77c1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'12d89b'},body:JSON.stringify({sessionId:'12d89b',hypothesisId:'B',location:'index.html:237',message:'metadata object',data:{metadata:jsonResponse.metadata,generated_at:jsonResponse.metadata?.generated_at,type:typeof jsonResponse.metadata?.generated_at},timestamp:Date.now()})}).catch(()=>{});
-                    // #endregion
                     const rawDate = jsonResponse.metadata.generated_at;
-                    // #region agent log
-                    fetch('http://127.0.0.1:7841/ingest/5de5ab01-2120-4d42-978e-ebc7375e77c1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'12d89b'},body:JSON.stringify({sessionId:'12d89b',hypothesisId:'A',location:'index.html:240',message:'date parsing',data:{rawDate:rawDate,parsedDate:new Date(rawDate).toString(),parsedTime:new Date(rawDate).getTime(),isNaN:isNaN(new Date(rawDate).getTime())},timestamp:Date.now()})}).catch(()=>{});
-                    // #endregion
-                    const d = new Date(rawDate);
-                    dateSpan.textContent = d.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
+                    // Safari doesn't parse "YYYY-MM-DD HH:MM UTC" — normalize to ISO 8601
+                    const isoDate = rawDate.replace(' UTC', 'Z').replace(' ', 'T');
+                    const d = new Date(isoDate);
+                    dateSpan.textContent = isNaN(d) ? rawDate : d.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
                 }
 
                 if (!leaderboardData || leaderboardData.length === 0) {

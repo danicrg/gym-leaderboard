@@ -338,7 +338,7 @@ def main():
     # 8. Save Leaderboard with Metadata
     output_data = {
         "metadata": {
-            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         },
         "leaderboard": current_leaderboard
     }
