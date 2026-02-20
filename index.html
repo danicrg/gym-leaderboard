@@ -982,7 +982,7 @@
                         <div class="cotw-icon">🔥</div>
                         <div>
                             <div class="cotw-label">Climb of the Week</div>
-                            <div class="cotw-name">${c.name}</div>
+                            <div class="cotw-name">${c.slug ? `<a href="https://kaya-app.kayaclimb.com/climb/${c.slug}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">${c.name}</a>` : c.name}</div>
                             <div class="cotw-detail">${c.grade.toUpperCase()} • Rating: ${c.adjusted_rating} • ${c.num_senders} sender${c.num_senders !== 1 ? 's' : ''}</div>
                         </div>
                     </div>`;

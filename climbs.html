@@ -215,6 +215,9 @@
             font-size: 0.88em;
         }
 
+        td a { text-decoration: none; }
+        td a:hover { text-decoration: underline; }
+
         .show-more-wrap {
             text-align: center;
             padding: 20px 0 8px;
@@ -360,7 +363,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="rank-col">${c.rank}</td>
-                    <td style="font-weight:600;color:var(--text)">${c.name}</td>
+                    <td style="font-weight:600"><a href="https://kaya-app.kayaclimb.com/climb/${c.slug}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${c.name}</a></td>
                     <td><span class="grade-badge">${c.grade.toUpperCase()}</span></td>
                     <td class="rating-col">${c.adjusted_rating}</td>
                     <td class="hide-mobile"><span class="diff-badge ${diffClass}">${diffText}</span></td>
