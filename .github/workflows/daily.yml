@@ -2,7 +2,7 @@ name: Update Leaderboard
 
 on:
   schedule:
-    # Runs at 08:00 UTC every day
+    # Runs at midnight PST (08:00 UTC) every day
     - cron: '0 8 * * *'
   workflow_dispatch: # Allows manual trigger button
 

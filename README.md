@@ -55,7 +55,7 @@ This incrementally fetches new ascents, merges them with cached data, runs the r
 
 ## Automation
 
-The leaderboard updates daily at 08:00 UTC via a [GitHub Actions workflow](.github/workflows/daily.yml). The workflow runs `update.py` and auto-commits the updated JSON files back to the repo.
+The leaderboard updates daily at midnight PST (08:00 UTC) via a [GitHub Actions workflow](.github/workflows/daily.yml). The workflow runs `update.py` and auto-commits the updated JSON files back to the repo.
 
 ## License
 
