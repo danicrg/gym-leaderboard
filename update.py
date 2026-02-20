@@ -20,6 +20,9 @@ sys.stdout.reconfigure(line_buffering=True)
 log = logging.getLogger("update")
 
 # --- CONFIGURATION ---
+GYM_ID = os.environ.get('GYM_ID', '51')
+GYM_NAME = os.environ.get('GYM_NAME', 'Dogpatch Boulders')
+
 CONSTANTS = {
     'BASE_POINTS_V0': 1000,
     'POINTS_PER_GRADE': 100,
@@ -32,6 +35,8 @@ CONSTANTS = {
 
 DATA_FILE = 'data/raw_ascents.json'
 LEADERBOARD_FILE = 'data/leaderboard.json'
+HISTORY_FILE = 'data/history.json'
+TIME_WINDOWS = [7, 14, 30]
 
 # --- NETWORK CONFIGURATION (EXACT FROM YOUR SCRIPT) ---
 headers = {
@@ -73,8 +78,9 @@ def calculate_scarcity_bonus(ascent_count):
 # --- CORE CLASSES ---
 
 class KayaRanker:
-    def __init__(self, data):
+    def __init__(self, data, days_window=None):
         self.raw_data = data
+        self.days_window = days_window or CONSTANTS['DAYS_WINDOW']
         self.users = {}
         self.climbs = {}
         
@@ -82,10 +88,10 @@ class KayaRanker:
         self._preprocess_data()
         self._initialize_ratings()
         self._iterative_solve()
-        return self._generate_leaderboard()
+        return self._generate_leaderboard(), self._generate_climb_rankings(), self.get_climb_of_the_week()
 
     def _preprocess_data(self):
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=CONSTANTS['DAYS_WINDOW'])
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.days_window)
         log.info("Filtering ranking window since: %s", cutoff_date.date())
         
         for entry in self.raw_data:
@@ -122,8 +128,12 @@ class KayaRanker:
                     'grade_name': grade_str,
                     'base_rating': base_points,
                     'current_rating': base_points,
-                    'senders': set()
+                    'senders': set(),
+                    'first_ascent_date': ascent_date,
                 }
+            else:
+                if ascent_date < self.climbs[cid]['first_ascent_date']:
+                    self.climbs[cid]['first_ascent_date'] = ascent_date
             self.climbs[cid]['senders'].add(uid)
 
         log.info("Preprocessed: %d users, %d climbs from %d raw entries",
@@ -157,17 +167,68 @@ class KayaRanker:
     def _generate_leaderboard(self):
         leaderboard = []
         for uid, user in self.users.items():
+            send_details = []
+            grade_counts = {}
+            for cid in user['sends']:
+                climb = self.climbs[cid]
+                gname = climb['grade_name']
+                send_details.append({
+                    'name': climb['name'],
+                    'grade': gname,
+                    'rating': int(climb['current_rating']),
+                })
+                g_key = gname.upper() if gname else 'V?'
+                grade_counts[g_key] = grade_counts.get(g_key, 0) + 1
+
+            send_details.sort(key=lambda x: x['rating'], reverse=True)
+
             leaderboard.append({
                 'username': user['username'],
                 'name': user['name'],
                 'score': int(user['rating']),
                 'top_send': max([self.climbs[cid]['grade_name'] for cid in user['sends']], key=lambda x: parse_grade_to_points(x)),
-                'total_sends': len(user['sends'])
+                'total_sends': len(user['sends']),
+                'sends': send_details[:10],
+                'grade_pyramid': grade_counts,
             })
         leaderboard.sort(key=lambda x: x['score'], reverse=True)
         for i, row in enumerate(leaderboard):
             row['rank'] = i + 1
         return leaderboard
+
+    def _generate_climb_rankings(self):
+        climb_list = []
+        for cid, climb in self.climbs.items():
+            climb_list.append({
+                'slug': cid,
+                'name': climb['name'],
+                'grade': climb['grade_name'],
+                'base_rating': int(climb['base_rating']),
+                'adjusted_rating': int(climb['current_rating']),
+                'num_senders': len(climb['senders']),
+            })
+        climb_list.sort(key=lambda x: x['adjusted_rating'], reverse=True)
+        for i, row in enumerate(climb_list):
+            row['rank'] = i + 1
+        return climb_list
+
+    def get_climb_of_the_week(self):
+        """Highest-rated climb whose first ascent was in the last 7 days."""
+        week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        candidates = []
+        for cid, climb in self.climbs.items():
+            if climb.get('first_ascent_date') and climb['first_ascent_date'] >= week_ago:
+                candidates.append({
+                    'slug': cid,
+                    'name': climb['name'],
+                    'grade': climb['grade_name'],
+                    'adjusted_rating': int(climb['current_rating']),
+                    'num_senders': len(climb['senders']),
+                })
+        if not candidates:
+            return None
+        candidates.sort(key=lambda x: x['adjusted_rating'], reverse=True)
+        return candidates[0]
 
 # --- SCRAPING LOGIC (EXACT REPLICA) ---
 
@@ -176,7 +237,7 @@ def get_data_batch(offset, max_retries=20):
     json_data = {
         'operationName': 'webAscentsForGym',
         'variables': {
-            'gym_id': '51',
+            'gym_id': GYM_ID,
             'offset': offset,
             'count': 15,
         },
@@ -256,7 +317,7 @@ def fetch_incremental_data(latest_stored_date):
 
 def main():
     run_start = time.monotonic()
-    log.info("=== Leaderboard update started ===")
+    log.info("=== Leaderboard update started for %s (gym_id=%s) ===", GYM_NAME, GYM_ID)
 
     # 1. Load Existing Raw Data
     if os.path.exists(DATA_FILE):
@@ -306,8 +367,10 @@ def main():
     # 6. Calculate Current Leaderboard
     log.info("Running ranking algorithm...")
     ranker = KayaRanker(final_data)
-    current_leaderboard = ranker.run()
-    log.info("Ranking complete: %d users on leaderboard", len(current_leaderboard))
+    current_leaderboard, climb_rankings, climb_of_week = ranker.run()
+    log.info("Ranking complete: %d users on leaderboard, %d climbs ranked", len(current_leaderboard), len(climb_rankings))
+    if climb_of_week:
+        log.info("Climb of the week: %s (%s, rating %d)", climb_of_week['name'], climb_of_week['grade'], climb_of_week['adjusted_rating'])
 
     # 7. Compare with Yesterday's Leaderboard (for arrows)
     old_ranks = {}
@@ -336,18 +399,73 @@ def main():
     log.info("Movement: %d new entries, %d returning", new_count, len(current_leaderboard) - new_count)
 
     # 8. Save Leaderboard with Metadata
+    metadata = {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "gym_id": GYM_ID,
+        "gym_name": GYM_NAME,
+    }
+    if climb_of_week:
+        metadata["climb_of_the_week"] = climb_of_week
     output_data = {
-        "metadata": {
-            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        },
+        "metadata": metadata,
         "leaderboard": current_leaderboard
     }
 
     with open(LEADERBOARD_FILE, 'w') as f:
         json.dump(output_data, f)
-    
-    elapsed = time.monotonic() - run_start
     log.info("Saved leaderboard to %s", LEADERBOARD_FILE)
+
+    # 8b. Append to score history (keeps last 60 days of daily snapshots)
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    history = {}
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, 'r') as f:
+                history = json.load(f)
+        except Exception:
+            history = {}
+
+    today_snapshot = {row['username']: row['score'] for row in current_leaderboard}
+    history[today_str] = today_snapshot
+
+    cutoff_history = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
+    history = {k: v for k, v in history.items() if k >= cutoff_history}
+
+    with open(HISTORY_FILE, 'w') as f:
+        json.dump(history, f)
+    log.info("Saved score history to %s (%d days)", HISTORY_FILE, len(history))
+
+    # 9. Save Climb Rankings
+    CLIMBS_FILE = 'data/climbs.json'
+    climbs_output = {
+        "metadata": {
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        },
+        "climbs": climb_rankings
+    }
+    with open(CLIMBS_FILE, 'w') as f:
+        json.dump(climbs_output, f)
+    log.info("Saved climb rankings to %s (%d climbs)", CLIMBS_FILE, len(climb_rankings))
+
+    # 10. Generate time-window variants (7d, 14d)
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for window in TIME_WINDOWS:
+        if window == CONSTANTS['DAYS_WINDOW']:
+            continue
+        log.info("Generating %d-day leaderboard...", window)
+        tw_ranker = KayaRanker(final_data, days_window=window)
+        tw_leaderboard, _, _ = tw_ranker.run()
+        tw_leaderboard.sort(key=lambda x: x['score'], reverse=True)
+        for i, row in enumerate(tw_leaderboard):
+            row['rank'] = i + 1
+            row['movement'] = 0
+        tw_output = {"metadata": {"generated_at": generated_at}, "leaderboard": tw_leaderboard}
+        tw_file = f'data/leaderboard-{window}d.json'
+        with open(tw_file, 'w') as f:
+            json.dump(tw_output, f)
+        log.info("Saved %d-day leaderboard to %s (%d users)", window, tw_file, len(tw_leaderboard))
+
+    elapsed = time.monotonic() - run_start
     if current_leaderboard:
         log.info("Top 3: %s",
                  ", ".join(f"#{r['rank']} {r['name']} ({r['score']}pts)" for r in current_leaderboard[:3]))

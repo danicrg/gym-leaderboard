@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardest Climbs — Dogpatch Boulders</title>
+    <style>
+        :root {
+            --bg: #f4f4f9;
+            --surface: #ffffff;
+            --text: #333333;
+            --text-heading: #2c3e50;
+            --text-secondary: #666666;
+            --text-muted: #888888;
+            --text-faint: #999999;
+            --border: #eeeeee;
+            --border-input: #dddddd;
+            --th-bg: #f8f9fa;
+            --th-text: #555555;
+            --accent: #2980b9;
+            --accent-hover: #1c5980;
+            --green: #27ae60;
+            --red: #c0392b;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --input-focus-ring: rgba(41, 128, 185, 0.1);
+            --show-more-bg: #f0f4f8;
+            --show-more-hover: #e4ecf4;
+            --badge-up: #e8f8f0;
+            --badge-down: #fde8e8;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #e0e0e0;
+            --text-heading: #e8e8f0;
+            --text-secondary: #aaaabc;
+            --text-muted: #888899;
+            --text-faint: #666678;
+            --border: #2a2a40;
+            --border-input: #3a3a55;
+            --th-bg: #1e1e38;
+            --th-text: #aaaabc;
+            --accent: #5dade2;
+            --accent-hover: #85c1e9;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --input-focus-ring: rgba(93, 173, 226, 0.2);
+            --show-more-bg: #1e1e38;
+            --show-more-hover: #2a2a48;
+            --badge-up: #1a3328;
+            --badge-down: #3d1a1a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .header-wrap { position: relative; }
+
+        .theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .theme-toggle:hover { border-color: var(--accent); }
+
+        h1 {
+            text-align: center;
+            color: var(--text-heading);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .subtitle a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .subtitle a:hover { text-decoration: underline; }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 180px;
+            padding: 10px 14px;
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            font-size: 0.92em;
+            outline: none;
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .search-box:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+
+        .grade-filter {
+            padding: 10px 14px;
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            font-size: 0.92em;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .result-count {
+            font-size: 0.82em;
+            color: var(--text-faint);
+            padding: 4px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--th-bg);
+            font-weight: 600;
+            color: var(--th-text);
+            font-size: 0.85em;
+        }
+
+        .rank-col {
+            width: 50px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .rating-col {
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--text-heading);
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.88em;
+        }
+
+        .diff-badge {
+            font-size: 0.82em;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .diff-badge.up {
+            color: var(--green);
+            background: var(--badge-up);
+        }
+
+        .diff-badge.down {
+            color: var(--red);
+            background: var(--badge-down);
+        }
+
+        .diff-badge.neutral {
+            color: var(--text-muted);
+        }
+
+        .senders {
+            color: var(--text-muted);
+            font-size: 0.88em;
+        }
+
+        .show-more-wrap {
+            text-align: center;
+            padding: 20px 0 8px;
+        }
+
+        .show-more-btn {
+            background: var(--show-more-bg);
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            padding: 10px 28px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .show-more-btn:hover {
+            background: var(--show-more-hover);
+            border-color: var(--accent);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: var(--text-faint);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .footer a { color: var(--text-muted); font-weight: bold; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 8px; }
+            .container { padding: 12px; border-radius: 0; box-shadow: none; }
+            h1 { font-size: 1.4em; }
+            th, td { padding: 8px 6px; font-size: 0.88em; }
+            .hide-mobile { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-wrap">
+            <button class="theme-toggle" id="theme-toggle">🌙</button>
+            <h1>Hardest Climbs at Dogpatch</h1>
+        </div>
+        <div class="subtitle">
+            Ranked by adjusted difficulty •
+            <a href="index.html">Leaderboard</a> •
+            <a href="methodology.html">Methodology</a>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-box" id="search-input" placeholder="Search by climb name...">
+            <select class="grade-filter" id="grade-filter">
+                <option value="">All Grades</option>
+                <option value="v10">V10+</option>
+                <option value="v9">V9+</option>
+                <option value="v8">V8+</option>
+                <option value="v7">V7+</option>
+                <option value="v6">V6+</option>
+                <option value="v5">V5+</option>
+                <option value="v4">V4+</option>
+            </select>
+        </div>
+        <div class="result-count" id="result-count"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="rank-col">#</th>
+                    <th>Climb</th>
+                    <th>Grade</th>
+                    <th>Rating</th>
+                    <th class="hide-mobile">vs. Base</th>
+                    <th class="hide-mobile">Senders</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+
+        <div class="show-more-wrap" id="show-more-wrap" style="display:none;">
+            <button class="show-more-btn" id="show-more-btn">Show More</button>
+        </div>
+
+        <div class="footer">
+            <p>Adjusted ratings reflect who actually sends each climb. <a href="methodology.html">Learn more</a>.</p>
+            <p>Created by <a href="https://github.com/danicrg" target="_blank">danicrg</a></p>
+        </div>
+    </div>
+
+    <script>
+        (function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark))
+                document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            document.getElementById('theme-toggle').textContent = isDark ? '🌙' : '☀️';
+        });
+        document.getElementById('theme-toggle').textContent =
+            document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+
+        let allClimbs = [];
+        let filtered = [];
+        const PAGE_SIZE = 50;
+        let visibleCount = PAGE_SIZE;
+
+        function gradeToNum(g) {
+            if (!g) return -1;
+            const m = g.toLowerCase().replace('v', '').trim();
+            if (m === '?') return -1;
+            return parseInt(m.split('-').pop()) || 0;
+        }
+
+        function render() {
+            const tbody = document.getElementById('tbody');
+            const countEl = document.getElementById('result-count');
+            const wrap = document.getElementById('show-more-wrap');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No climbs match.</td></tr>';
+                countEl.textContent = '0 results';
+                wrap.style.display = 'none';
+                return;
+            }
+
+            const slice = filtered.slice(0, visibleCount);
+            tbody.innerHTML = '';
+            slice.forEach((c, i) => {
+                const diff = c.adjusted_rating - c.base_rating;
+                let diffClass = 'neutral', diffText = '—';
+                if (diff > 0) { diffClass = 'up'; diffText = `+${diff}`; }
+                else if (diff < 0) { diffClass = 'down'; diffText = `${diff}`; }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="rank-col">${c.rank}</td>
+                    <td style="font-weight:600;color:var(--text)">${c.name}</td>
+                    <td><span class="grade-badge">${c.grade.toUpperCase()}</span></td>
+                    <td class="rating-col">${c.adjusted_rating}</td>
+                    <td class="hide-mobile"><span class="diff-badge ${diffClass}">${diffText}</span></td>
+                    <td class="hide-mobile senders">${c.num_senders}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const isFiltering = document.getElementById('search-input').value || document.getElementById('grade-filter').value;
+            countEl.textContent = isFiltering ? `${filtered.length} of ${allClimbs.length} climbs` : '';
+
+            if (filtered.length > visibleCount) {
+                wrap.style.display = '';
+                document.getElementById('show-more-btn').textContent = `Show More (${filtered.length - visibleCount} remaining)`;
+            } else {
+                wrap.style.display = 'none';
+            }
+        }
+
+        function applyFilters() {
+            const q = document.getElementById('search-input').value.toLowerCase().trim();
+            const minGrade = document.getElementById('grade-filter').value;
+            const minNum = minGrade ? gradeToNum(minGrade) : -1;
+            visibleCount = PAGE_SIZE;
+            filtered = allClimbs.filter(c => {
+                if (q && !c.name.toLowerCase().includes(q)) return false;
+                if (minNum >= 0 && gradeToNum(c.grade) < minNum) return false;
+                return true;
+            });
+            render();
+        }
+
+        async function load() {
+            try {
+                const res = await fetch(`data/climbs.json?t=${Date.now()}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                allClimbs = json.climbs || json;
+                filtered = allClimbs;
+                render();
+
+                document.getElementById('search-input').addEventListener('input', applyFilters);
+                document.getElementById('grade-filter').addEventListener('change', applyFilters);
+                document.getElementById('show-more-btn').addEventListener('click', () => {
+                    visibleCount += PAGE_SIZE;
+                    render();
+                });
+            } catch (e) {
+                document.getElementById('tbody').innerHTML =
+                    `<tr><td colspan="6" style="text-align:center;color:var(--red);">Error: ${e.message}</td></tr>`;
+            }
+        }
+        load();
+    </script>
+</body>
+
+</html>

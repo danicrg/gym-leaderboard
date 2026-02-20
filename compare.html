@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Head-to-Head — Dogpatch Boulders</title>
+    <style>
+        :root {
+            --bg: #f4f4f9;
+            --surface: #ffffff;
+            --text: #333333;
+            --text-heading: #2c3e50;
+            --text-secondary: #666666;
+            --text-muted: #888888;
+            --text-faint: #999999;
+            --border: #eeeeee;
+            --border-input: #dddddd;
+            --th-bg: #f8f9fa;
+            --th-text: #555555;
+            --accent: #2980b9;
+            --accent-hover: #1c5980;
+            --green: #27ae60;
+            --red: #c0392b;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --input-focus-ring: rgba(41, 128, 185, 0.1);
+            --card-a: #e8f4fd;
+            --card-b: #fef0e8;
+            --accent-a: #2980b9;
+            --accent-b: #e67e22;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #e0e0e0;
+            --text-heading: #e8e8f0;
+            --text-secondary: #aaaabc;
+            --text-muted: #888899;
+            --text-faint: #666678;
+            --border: #2a2a40;
+            --border-input: #3a3a55;
+            --th-bg: #1e1e38;
+            --th-text: #aaaabc;
+            --accent: #5dade2;
+            --accent-hover: #85c1e9;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --input-focus-ring: rgba(93, 173, 226, 0.2);
+            --card-a: #162840;
+            --card-b: #2e2218;
+            --accent-a: #5dade2;
+            --accent-b: #f5b041;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 28px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .header-wrap { position: relative; }
+
+        .theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .theme-toggle:hover { border-color: var(--accent); }
+
+        h1 { text-align: center; color: var(--text-heading); margin-bottom: 5px; }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 24px;
+        }
+
+        .subtitle a { color: var(--accent); text-decoration: none; }
+        .subtitle a:hover { text-decoration: underline; }
+
+        .picker-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .picker {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .picker label {
+            display: block;
+            font-size: 0.78em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .picker.a label { color: var(--accent-a); }
+        .picker.b label { color: var(--accent-b); }
+
+        .picker input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 14px;
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            font-size: 0.92em;
+            outline: none;
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .picker input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            z-index: 10;
+            background: var(--surface);
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px var(--shadow);
+            width: calc(100% - 2px);
+        }
+
+        .autocomplete-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .autocomplete-item:hover { background: var(--th-bg); }
+        .autocomplete-item:last-child { border-bottom: none; }
+
+        .ac-name { font-weight: 600; color: var(--text); }
+        .ac-username { color: var(--text-muted); font-size: 0.85em; margin-left: 6px; }
+
+        .picker-wrap { position: relative; }
+
+        /* Comparison cards */
+        .vs-banner {
+            text-align: center;
+            font-size: 1.4em;
+            font-weight: 800;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-card {
+            border-radius: 10px;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card.a { background: var(--card-a); border-color: var(--accent-a); }
+        .stat-card.b { background: var(--card-b); border-color: var(--accent-b); }
+
+        .stat-name {
+            font-weight: 700;
+            font-size: 1.05em;
+            color: var(--text-heading);
+            margin-bottom: 2px;
+        }
+
+        .stat-sub { font-size: 0.82em; color: var(--text-muted); margin-bottom: 12px; }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-top: 1px solid var(--border);
+            font-size: 0.88em;
+        }
+
+        .stat-label { color: var(--text-secondary); }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--text);
+            font-family: monospace;
+        }
+
+        .stat-value.winner { color: var(--green); }
+
+        .shared-section {
+            margin-top: 28px;
+        }
+
+        .shared-title {
+            font-size: 0.82em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .shared-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .shared-chip {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.82em;
+            font-weight: 600;
+            background: var(--th-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px 0;
+            font-size: 0.95em;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: var(--text-faint);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .footer a { color: var(--text-muted); font-weight: bold; text-decoration: none; }
+
+        @media (max-width: 600px) {
+            body { padding: 8px; }
+            .container { padding: 16px; border-radius: 0; box-shadow: none; }
+            .compare-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-wrap">
+            <button class="theme-toggle" id="theme-toggle">🌙</button>
+            <h1>Head-to-Head</h1>
+        </div>
+        <div class="subtitle">
+            Compare two climbers side by side •
+            <a href="index.html">Leaderboard</a>
+        </div>
+
+        <div class="picker-row">
+            <div class="picker a">
+                <label>Climber A</label>
+                <div class="picker-wrap">
+                    <input type="text" id="input-a" placeholder="Search...">
+                    <div class="autocomplete-list" id="ac-a" style="display:none;"></div>
+                </div>
+            </div>
+            <div class="picker b">
+                <label>Climber B</label>
+                <div class="picker-wrap">
+                    <input type="text" id="input-b" placeholder="Search...">
+                    <div class="autocomplete-list" id="ac-b" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="comparison-area">
+            <div class="empty-state">Select two climbers above to compare.</div>
+        </div>
+
+        <div class="footer">
+            <p>Created by <a href="https://github.com/danicrg" target="_blank">danicrg</a></p>
+        </div>
+    </div>
+
+    <script>
+        (function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark))
+                document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            document.getElementById('theme-toggle').textContent = isDark ? '🌙' : '☀️';
+        });
+        document.getElementById('theme-toggle').textContent =
+            document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+
+        let allData = [];
+        let selected = { a: null, b: null };
+
+        function gradeToNum(g) {
+            if (!g) return -1;
+            const m = g.toLowerCase().replace('v', '').trim();
+            if (m === '?') return -1;
+            return parseInt(m.split('-').pop()) || 0;
+        }
+
+        function setupAutocomplete(inputId, acId, key) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(acId);
+
+            input.addEventListener('input', () => {
+                const q = input.value.toLowerCase().trim();
+                if (!q) { list.style.display = 'none'; return; }
+                const matches = allData.filter(r =>
+                    r.name.toLowerCase().includes(q) || r.username.toLowerCase().includes(q)
+                ).slice(0, 8);
+                if (matches.length === 0) { list.style.display = 'none'; return; }
+                list.innerHTML = matches.map(r => `
+                    <div class="autocomplete-item" data-username="${r.username}">
+                        <span class="ac-name">${r.name}</span>
+                        <span class="ac-username">@${r.username}</span>
+                    </div>
+                `).join('');
+                list.style.display = '';
+
+                list.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const un = item.dataset.username;
+                        selected[key] = allData.find(r => r.username === un);
+                        input.value = selected[key].name;
+                        list.style.display = 'none';
+                        tryCompare();
+                    });
+                });
+            });
+
+            input.addEventListener('blur', () => {
+                setTimeout(() => list.style.display = 'none', 200);
+            });
+        }
+
+        function tryCompare() {
+            if (!selected.a || !selected.b) return;
+            const area = document.getElementById('comparison-area');
+            const a = selected.a, b = selected.b;
+
+            const w = (av, bv) => {
+                if (av > bv) return ['winner', ''];
+                if (bv > av) return ['', 'winner'];
+                return ['', ''];
+            };
+
+            const [scoreWA, scoreWB] = w(a.score, b.score);
+            const [rankWA, rankWB] = w(b.rank, a.rank);
+            const [gradeWA, gradeWB] = w(gradeToNum(a.top_send), gradeToNum(b.top_send));
+            const [volWA, volWB] = w(a.total_sends, b.total_sends);
+
+            const sendNamesA = new Set((a.sends || []).map(s => s.name));
+            const sendNamesB = new Set((b.sends || []).map(s => s.name));
+            const shared = [...sendNamesA].filter(n => sendNamesB.has(n));
+
+            let sharedHtml = '';
+            if (shared.length > 0) {
+                sharedHtml = `
+                    <div class="shared-section">
+                        <div class="shared-title">Climbs They Both Sent (top 10 overlap)</div>
+                        <div class="shared-list">
+                            ${shared.map(n => `<span class="shared-chip">${n}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            area.innerHTML = `
+                <div class="vs-banner">${a.name.split(' ')[0]} vs ${b.name.split(' ')[0]}</div>
+                <div class="compare-grid">
+                    <div class="stat-card a">
+                        <div class="stat-name">${a.name}</div>
+                        <div class="stat-sub">@${a.username} • #${a.rank}</div>
+                        <div class="stat-row"><span class="stat-label">Score</span><span class="stat-value ${scoreWA}">${a.score}</span></div>
+                        <div class="stat-row"><span class="stat-label">Rank</span><span class="stat-value ${rankWA}">#${a.rank}</span></div>
+                        <div class="stat-row"><span class="stat-label">Top Send</span><span class="stat-value ${gradeWA}">${a.top_send.toUpperCase()}</span></div>
+                        <div class="stat-row"><span class="stat-label">Sends</span><span class="stat-value ${volWA}">${a.total_sends}</span></div>
+                    </div>
+                    <div class="stat-card b">
+                        <div class="stat-name">${b.name}</div>
+                        <div class="stat-sub">@${b.username} • #${b.rank}</div>
+                        <div class="stat-row"><span class="stat-label">Score</span><span class="stat-value ${scoreWB}">${b.score}</span></div>
+                        <div class="stat-row"><span class="stat-label">Rank</span><span class="stat-value ${rankWB}">#${b.rank}</span></div>
+                        <div class="stat-row"><span class="stat-label">Top Send</span><span class="stat-value ${gradeWB}">${b.top_send.toUpperCase()}</span></div>
+                        <div class="stat-row"><span class="stat-label">Sends</span><span class="stat-value ${volWB}">${b.total_sends}</span></div>
+                    </div>
+                </div>
+                ${sharedHtml}
+            `;
+        }
+
+        async function init() {
+            try {
+                const res = await fetch(`data/leaderboard.json?t=${Date.now()}`);
+                const json = await res.json();
+                allData = Array.isArray(json) ? json : json.leaderboard;
+
+                setupAutocomplete('input-a', 'ac-a', 'a');
+                setupAutocomplete('input-b', 'ac-b', 'b');
+
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('a') && params.get('b')) {
+                    selected.a = allData.find(r => r.username === params.get('a'));
+                    selected.b = allData.find(r => r.username === params.get('b'));
+                    if (selected.a) document.getElementById('input-a').value = selected.a.name;
+                    if (selected.b) document.getElementById('input-b').value = selected.b.name;
+                    tryCompare();
+                }
+            } catch (e) {
+                document.getElementById('comparison-area').innerHTML =
+                    `<div class="empty-state" style="color:var(--red)">Error loading data: ${e.message}</div>`;
+            }
+        }
+        init();
+    </script>
+</body>
+
+</html>

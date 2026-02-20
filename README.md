@@ -10,17 +10,39 @@ A community-driven climbing leaderboard for [Dogpatch Boulders](https://kaya-app
 
 The scoring system is designed around one principle: **peak ability matters more than volume.** Your score is dominated by your single hardest send — additional climbs act as tiebreakers, not replacements for difficulty. See the full [methodology page](methodology.html) for details.
 
+## Features
+
+- **Search & Filter** — Find climbers by name/username, filter by minimum grade
+- **Podium** — Gold/silver/bronze cards for the top 3 climbers
+- **Biggest Movers** — Daily risers and fallers highlighted
+- **Expandable Rows** — Click any climber to see their top sends and grade pyramid
+- **Time Window Toggle** — Switch between 7-day, 14-day, and 30-day views
+- **Score Sparklines** — Inline trend charts showing score history over time
+- **Dark Mode** — Toggle with auto-detection for system preference
+- **[Hardest Climbs](climbs.html)** — Climb rankings by adjusted difficulty
+- **[Head-to-Head](compare.html)** — Side-by-side comparison of any two climbers
+- **[Profile Cards](profile.html)** — Shareable stats card for any climber
+- **Climb of the Week** — Highlights the highest-rated newly-sent climb
+- **Multi-Gym Support** — Configure `GYM_ID` to run for any Kaya gym
+
 ## Project Structure
 
 ```
-├── index.html          # Leaderboard frontend
-├── methodology.html    # Scoring methodology explainer
-├── update.py           # Daily update script (scrape + rank + save)
+├── index.html              # Leaderboard frontend
+├── climbs.html             # Hardest climbs page
+├── compare.html            # Head-to-head comparison
+├── profile.html            # Personal stats card
+├── methodology.html        # Scoring methodology explainer
+├── update.py               # Daily update script (scrape + rank + save)
 ├── data/
 │   ├── raw_ascents.json    # Cached ascent data (last 60 days)
-│   └── leaderboard.json    # Current leaderboard output
+│   ├── leaderboard.json    # Current 30-day leaderboard
+│   ├── leaderboard-7d.json # 7-day leaderboard
+│   ├── leaderboard-14d.json# 14-day leaderboard
+│   ├── climbs.json         # Climb rankings by adjusted difficulty
+│   └── history.json        # Daily score snapshots (last 60 days)
 └── .github/workflows/
-    └── daily.yml       # Scheduled GitHub Actions workflow
+    └── daily.yml           # Scheduled GitHub Actions workflow
 ```
 
 ## Scoring at a Glance
@@ -36,22 +58,26 @@ The scoring system is designed around one principle: **peak ability matters more
 ## Setup
 
 ```bash
-pip install requests tqdm pandas numpy
+pip install requests
 ```
 
 ### Run locally
 
 ```bash
-python kaya.py
-```
-
-### Run the daily updater
-
-```bash
 python update.py
 ```
 
-This incrementally fetches new ascents, merges them with cached data, runs the ranking algorithm, computes rank movement, and writes `data/leaderboard.json`.
+This incrementally fetches new ascents, merges them with cached data, runs the ranking algorithm, computes rank movement, and writes all output JSON files.
+
+### Multi-Gym Configuration
+
+Set environment variables to target a different Kaya gym:
+
+```bash
+GYM_ID=42 GYM_NAME="My Gym" python update.py
+```
+
+For GitHub Actions, set `GYM_ID` and `GYM_NAME` as repository variables.
 
 ## Automation
 

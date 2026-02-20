@@ -6,32 +6,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dogpatch Boulders Leaderboard</title>
     <style>
+        :root {
+            --bg: #f4f4f9;
+            --surface: #ffffff;
+            --text: #333333;
+            --text-heading: #2c3e50;
+            --text-secondary: #666666;
+            --text-muted: #888888;
+            --text-faint: #999999;
+            --border: #eeeeee;
+            --border-input: #dddddd;
+            --th-bg: #f8f9fa;
+            --th-text: #555555;
+            --accent: #2980b9;
+            --accent-hover: #1c5980;
+            --green: #27ae60;
+            --red: #c0392b;
+            --move-same: #bdc3c7;
+            --new-bg: #fff3cd;
+            --new-text: #f39c12;
+            --error-bg: #ffeeee;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --input-focus-ring: rgba(41, 128, 185, 0.1);
+            --show-more-bg: #f0f4f8;
+            --show-more-hover: #e4ecf4;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #e0e0e0;
+            --text-heading: #e8e8f0;
+            --text-secondary: #aaaabc;
+            --text-muted: #888899;
+            --text-faint: #666678;
+            --border: #2a2a40;
+            --border-input: #3a3a55;
+            --th-bg: #1e1e38;
+            --th-text: #aaaabc;
+            --accent: #5dade2;
+            --accent-hover: #85c1e9;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --move-same: #555568;
+            --new-bg: #3d3520;
+            --new-text: #f5b041;
+            --error-bg: #3d1a1a;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --input-focus-ring: rgba(93, 173, 226, 0.2);
+            --show-more-bg: #1e1e38;
+            --show-more-hover: #2a2a48;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f4f4f9;
-            color: #333;
+            background: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
+            transition: background 0.3s, color 0.3s;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: white;
+            background: var(--surface);
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px var(--shadow);
+            transition: background 0.3s;
         }
 
         h1 {
             text-align: center;
-            color: #2c3e50;
+            color: var(--text-heading);
             margin-bottom: 5px;
         }
 
         .subtitle {
             text-align: center;
-            color: #666;
+            color: var(--text-secondary);
             font-size: 0.9em;
             margin-bottom: 20px;
         }
@@ -47,13 +101,13 @@
         td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border);
         }
 
         th {
-            background-color: #f8f9fa;
+            background-color: var(--th-bg);
             font-weight: 600;
-            color: #555;
+            color: var(--th-text);
         }
 
         .rank-col {
@@ -65,13 +119,12 @@
         .score-col {
             font-family: monospace;
             font-weight: bold;
-            color: #2c3e50;
+            color: var(--text-heading);
         }
 
-        /* Links */
         a {
             text-decoration: none;
-            color: #2980b9;
+            color: var(--accent);
         }
 
         a:hover {
@@ -80,63 +133,477 @@
 
         a.profile-link {
             font-weight: 600;
-            color: #2980b9;
+            color: var(--accent);
         }
 
         a.profile-link:hover {
-            color: #1c5980;
+            color: var(--accent-hover);
         }
 
-        /* Movement Indicators */
         .move-up {
-            color: #27ae60;
+            color: var(--green);
             font-weight: bold;
             font-size: 0.9em;
         }
 
         .move-down {
-            color: #c0392b;
+            color: var(--red);
             font-weight: bold;
             font-size: 0.9em;
         }
 
         .move-same {
-            color: #bdc3c7;
+            color: var(--move-same);
             font-size: 0.9em;
         }
 
         .move-new {
-            color: #f39c12;
+            color: var(--new-text);
             font-size: 0.8em;
             font-weight: bold;
-            background: #fff3cd;
+            background: var(--new-bg);
             padding: 2px 6px;
             border-radius: 4px;
         }
 
-        /* Footer */
         .footer {
             text-align: center;
             margin-top: 40px;
             font-size: 0.8em;
-            color: #999;
-            border-top: 1px solid #eee;
+            color: var(--text-faint);
+            border-top: 1px solid var(--border);
             padding-top: 20px;
         }
 
         .footer a {
-            color: #777;
+            color: var(--text-muted);
             font-weight: bold;
         }
 
+        /* Theme Toggle */
+        .theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            line-height: 1;
+            transition: border-color 0.2s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .header-wrap {
+            position: relative;
+        }
+
         #error-msg {
-            color: red;
+            color: var(--red);
             text-align: center;
             padding: 20px;
             display: none;
-            background: #ffeeee;
-            border: 1px solid red;
+            background: var(--error-bg);
+            border: 1px solid var(--red);
             margin-top: 20px;
+        }
+
+        /* Search & Filter Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 180px;
+            padding: 10px 14px;
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            font-size: 0.92em;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .search-box:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+
+        .grade-filter {
+            padding: 10px 14px;
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            font-size: 0.92em;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .grade-filter:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+
+        .result-count {
+            font-size: 0.82em;
+            color: var(--text-faint);
+            padding: 4px 0;
+        }
+
+        /* Show More Button */
+        .show-more-wrap {
+            text-align: center;
+            padding: 20px 0 8px;
+        }
+
+        .show-more-btn {
+            background: var(--show-more-bg);
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            padding: 10px 28px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .show-more-btn:hover {
+            background: var(--show-more-hover);
+            border-color: var(--accent);
+        }
+
+        /* Podium */
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 12px;
+            margin: 20px 0 28px;
+        }
+
+        .podium-card {
+            text-align: center;
+            border-radius: 12px;
+            padding: 18px 14px 14px;
+            position: relative;
+            flex: 1;
+            max-width: 200px;
+            border: 2px solid transparent;
+        }
+
+        .podium-card.gold {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+            border-color: #f0c040;
+            order: 2;
+            padding-top: 22px;
+            min-height: 140px;
+        }
+
+        .podium-card.silver {
+            background: linear-gradient(135deg, #f8f8fa 0%, #e8e8ee 100%);
+            border-color: #c0c0c8;
+            order: 1;
+            min-height: 120px;
+        }
+
+        .podium-card.bronze {
+            background: linear-gradient(135deg, #fef6f0 0%, #f5e0d0 100%);
+            border-color: #cd7f32;
+            order: 3;
+            min-height: 120px;
+        }
+
+        .podium-medal {
+            font-size: 1.6em;
+            margin-bottom: 4px;
+        }
+
+        .podium-name {
+            font-weight: 700;
+            font-size: 0.95em;
+            color: #2c3e50;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .podium-name a {
+            color: inherit;
+        }
+
+        .podium-username {
+            font-size: 0.75em;
+            color: #999;
+        }
+
+        .podium-score {
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .podium-card.gold .podium-score { color: #b8860b; }
+        .podium-card.silver .podium-score { color: #6b6b78; }
+        .podium-card.bronze .podium-score { color: #8b5e3c; }
+
+        .podium-grade {
+            font-size: 0.78em;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Biggest Movers */
+        .movers-section {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .movers-group {
+            flex: 1;
+            min-width: 200px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            background: var(--surface);
+        }
+
+        .movers-title {
+            font-size: 0.78em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .movers-title.up { color: var(--green); }
+        .movers-title.down { color: var(--red); }
+
+        .mover-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            font-size: 0.88em;
+        }
+
+        .mover-row + .mover-row {
+            border-top: 1px solid var(--border);
+        }
+
+        .mover-name {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .mover-delta {
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+
+        .mover-delta.up { color: var(--green); }
+        .mover-delta.down { color: var(--red); }
+
+        /* Expandable Rows */
+        #leaderboard tbody tr.data-row {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        #leaderboard tbody tr.data-row:hover {
+            background: var(--th-bg);
+        }
+
+        .expand-row td {
+            padding: 0 12px !important;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .expand-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 4px;
+        }
+
+        .expand-content.open {
+            max-height: 500px;
+            padding: 12px 4px;
+        }
+
+        .sends-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .send-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            padding: 4px 0;
+            color: var(--text-secondary);
+        }
+
+        .send-item .send-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 12px;
+        }
+
+        .send-item .send-grade {
+            font-weight: 600;
+            color: var(--text);
+            min-width: 30px;
+        }
+
+        .send-item .send-rating {
+            font-family: monospace;
+            font-size: 0.9em;
+            color: var(--text-muted);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .expand-section-title {
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .mini-pyramid {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .pyramid-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+        }
+
+        .pyramid-label {
+            font-weight: 600;
+            color: var(--text);
+            min-width: 24px;
+        }
+
+        .pyramid-count {
+            background: var(--accent);
+            color: white;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        /* Time Window Toggle */
+        .time-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 16px;
+        }
+
+        .time-btn {
+            padding: 8px 18px;
+            border: 1px solid var(--border-input);
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-btn:first-child { border-radius: 8px 0 0 8px; }
+        .time-btn:last-child { border-radius: 0 8px 8px 0; }
+        .time-btn + .time-btn { border-left: none; }
+
+        .time-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .time-btn:not(.active):hover {
+            background: var(--th-bg);
+        }
+
+        /* Climb of the Week */
+        .cotw {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
+            border: 1px solid #d0e3f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        [data-theme="dark"] .cotw {
+            background: linear-gradient(135deg, #1a2a40 0%, #162840 100%);
+            border-color: #2a3a55;
+        }
+
+        .cotw-icon {
+            font-size: 1.8em;
+            flex-shrink: 0;
+        }
+
+        .cotw-label {
+            font-size: 0.72em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent);
+        }
+
+        .cotw-name {
+            font-weight: 700;
+            font-size: 1em;
+            color: var(--text-heading);
+        }
+
+        .cotw-detail {
+            font-size: 0.82em;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Sparklines */
+        .sparkline-col {
+            width: 60px;
+            text-align: center;
+        }
+
+        .sparkline-col svg {
+            vertical-align: middle;
         }
 
         @media (max-width: 600px) {
@@ -181,13 +648,45 @@
 <body>
 
     <div class="container">
-        <h1>Dogpatch Boulders Leaderboard</h1>
+        <div class="header-wrap">
+            <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
+            <h1>Dogpatch Boulders Leaderboard</h1>
+        </div>
         <div class="subtitle">
             Last 30 Days • Updated: <span id="last-updated">Loading...</span>
+            • <a href="climbs.html">Hardest Climbs</a>
+            • <a href="compare.html">Compare</a>
+            • <a href="profile.html">Profile</a>
             • <a href="methodology.html">Methodology</a>
         </div>
 
         <div id="error-msg"></div>
+
+        <div class="time-toggle" id="time-toggle">
+            <button class="time-btn" data-window="7">7 Days</button>
+            <button class="time-btn" data-window="14">14 Days</button>
+            <button class="time-btn active" data-window="30">30 Days</button>
+        </div>
+
+        <div class="podium" id="podium" style="display:none;"></div>
+        <div id="cotw" style="display:none;"></div>
+        <div class="movers-section" id="movers" style="display:none;"></div>
+
+        <div class="controls">
+            <input type="text" class="search-box" id="search-input" placeholder="Search by name or username...">
+            <select class="grade-filter" id="grade-filter">
+                <option value="">All Grades</option>
+                <option value="v10">V10+</option>
+                <option value="v9">V9+</option>
+                <option value="v8">V8+</option>
+                <option value="v7">V7+</option>
+                <option value="v6">V6+</option>
+                <option value="v5">V5+</option>
+                <option value="v4">V4+</option>
+                <option value="v3">V3+</option>
+            </select>
+        </div>
+        <div class="result-count" id="result-count"></div>
 
         <table id="leaderboard">
             <thead>
@@ -197,12 +696,17 @@
                     <th>Score</th>
                     <th class="hide-mobile">Top Send</th>
                     <th class="hide-mobile">Vol</th>
-                    <th>Trend</th>
+                    <th class="hide-mobile sparkline-col">Trend</th>
+                    <th>Move</th>
                 </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
+
+        <div class="show-more-wrap" id="show-more-wrap" style="display:none;">
+            <button class="show-more-btn" id="show-more-btn">Show More</button>
+        </div>
 
         <div class="footer">
             <p>Data sourced from the <a href="https://kaya-app.kayaclimb.com" target="_blank">Kaya app</a>. Log your climbs on Kaya to appear on the leaderboard.</p>
@@ -212,70 +716,308 @@
     </div>
 
     <script>
+        // Theme
+        (function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            document.getElementById('theme-toggle').textContent = isDark ? '🌙' : '☀️';
+        });
+
+        // Set initial icon
+        document.getElementById('theme-toggle').textContent =
+            document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+
+        let allData = [];
+        let scoreHistory = {};
+        let metadata = {};
+        const PAGE_SIZE = 50;
+        let currentFiltered = [];
+        let visibleCount = PAGE_SIZE;
+
+        function buildSparkline(username) {
+            const dates = Object.keys(scoreHistory).sort();
+            if (dates.length < 2) return '';
+            const values = dates.map(d => scoreHistory[d][username] || 0).filter(v => v > 0);
+            if (values.length < 2) return '';
+
+            const w = 56, h = 20, pad = 2;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = max - min || 1;
+            const points = values.map((v, i) => {
+                const x = pad + (i / (values.length - 1)) * (w - 2 * pad);
+                const y = pad + (1 - (v - min) / range) * (h - 2 * pad);
+                return `${x},${y}`;
+            }).join(' ');
+
+            const trending = values[values.length - 1] >= values[0];
+            const color = trending ? 'var(--green)' : 'var(--red)';
+            return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${points}"/></svg>`;
+        }
+
+        function gradeToNum(g) {
+            if (!g) return -1;
+            const m = g.toLowerCase().replace('v', '').trim();
+            if (m === '?') return -1;
+            const parts = m.split('-');
+            return parseInt(parts[parts.length - 1]) || 0;
+        }
+
+        function renderPodium(data) {
+            const podium = document.getElementById('podium');
+            if (!data || data.length < 3) { podium.style.display = 'none'; return; }
+            const medals = ['gold', 'silver', 'bronze'];
+            const icons = ['🥇', '🥈', '🥉'];
+            podium.innerHTML = [1, 0, 2].map(i => {
+                const r = data[i];
+                const url = `https://kaya-app.kayaclimb.com/user/${r.username}`;
+                return `<div class="podium-card ${medals[i]}">
+                    <div class="podium-medal">${icons[i]}</div>
+                    <div class="podium-name"><a href="${url}" target="_blank">${r.name}</a></div>
+                    <div class="podium-username">@${r.username}</div>
+                    <div class="podium-score">${r.score}</div>
+                    <div class="podium-grade">Top: ${r.top_send.toUpperCase()}</div>
+                </div>`;
+            }).join('');
+            podium.style.display = '';
+        }
+
+        function renderMovers(data) {
+            const el = document.getElementById('movers');
+            if (!data || data.length < 10) { el.style.display = 'none'; return; }
+
+            const numeric = data.filter(r => typeof r.movement === 'number' && r.movement !== 0);
+            const risers = [...numeric].sort((a, b) => b.movement - a.movement).slice(0, 3);
+            const fallers = [...numeric].sort((a, b) => a.movement - b.movement).slice(0, 3);
+
+            if (risers.length === 0 && fallers.length === 0) { el.style.display = 'none'; return; }
+
+            const renderGroup = (items, dir) => {
+                const icon = dir === 'up' ? '▲' : '▼';
+                return items.map(r => `
+                    <div class="mover-row">
+                        <span class="mover-name">${r.name}</span>
+                        <span class="mover-delta ${dir}">${icon} ${Math.abs(r.movement)}</span>
+                    </div>
+                `).join('');
+            };
+
+            el.innerHTML = `
+                <div class="movers-group">
+                    <div class="movers-title up">Biggest Risers</div>
+                    ${renderGroup(risers, 'up')}
+                </div>
+                <div class="movers-group">
+                    <div class="movers-title down">Biggest Fallers</div>
+                    ${renderGroup(fallers, 'down')}
+                </div>
+            `;
+            el.style.display = '';
+        }
+
+        function buildRowHtml(row) {
+            let moveHtml = '<span class="move-same">-</span>';
+            if (row.movement === 'NEW') {
+                moveHtml = '<span class="move-new">NEW</span>';
+            } else if (row.movement > 0) {
+                moveHtml = `<span class="move-up">▲ ${row.movement}</span>`;
+            } else if (row.movement < 0) {
+                moveHtml = `<span class="move-down">▼ ${Math.abs(row.movement)}</span>`;
+            }
+            const profileUrl = `https://kaya-app.kayaclimb.com/user/${row.username}`;
+            const sparkline = buildSparkline(row.username);
+            return `
+                <td class="rank-col">#${row.rank}</td>
+                <td>
+                    <div><a href="${profileUrl}" target="_blank" class="profile-link">${row.name}</a></div>
+                    <div style="font-size:0.8em; color:var(--text-muted)">@${row.username}</div>
+                </td>
+                <td class="score-col">${row.score}</td>
+                <td class="hide-mobile">${row.top_send}</td>
+                <td class="hide-mobile">${row.total_sends}</td>
+                <td class="hide-mobile sparkline-col">${sparkline}</td>
+                <td>${moveHtml}</td>
+            `;
+        }
+
+        function buildExpandHtml(row) {
+            let sendsHtml = '';
+            if (row.sends && row.sends.length > 0) {
+                const items = row.sends.map(s => `
+                    <div class="send-item">
+                        <span class="send-grade">${s.grade.toUpperCase()}</span>
+                        <span class="send-name">${s.name}</span>
+                        <span class="send-rating">${s.rating} pts</span>
+                    </div>
+                `).join('');
+                sendsHtml = `<div class="expand-section-title">Top Sends</div><div class="sends-list">${items}</div>`;
+            }
+
+            let pyramidHtml = '';
+            if (row.grade_pyramid) {
+                const sorted = Object.entries(row.grade_pyramid)
+                    .sort((a, b) => gradeToNum(b[0]) - gradeToNum(a[0]));
+                const bars = sorted.map(([g, c]) =>
+                    `<div class="pyramid-bar"><span class="pyramid-label">${g}</span><span class="pyramid-count">${c}</span></div>`
+                ).join('');
+                pyramidHtml = `<div class="expand-section-title" style="margin-top:10px;">Grade Pyramid</div><div class="mini-pyramid">${bars}</div>`;
+            }
+
+            if (!sendsHtml && !pyramidHtml) {
+                return '<div style="color:var(--text-muted);font-size:0.85em;padding:8px 0;">No detailed data available yet.</div>';
+            }
+            return sendsHtml + pyramidHtml;
+        }
+
+        function renderRows(data) {
+            const tbody = document.querySelector('#leaderboard tbody');
+            const countEl = document.getElementById('result-count');
+            const showMoreWrap = document.getElementById('show-more-wrap');
+
+            currentFiltered = data;
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">No climbers match your filters.</td></tr>';
+                countEl.textContent = '0 results';
+                showMoreWrap.style.display = 'none';
+                return;
+            }
+
+            const slice = data.slice(0, visibleCount);
+            tbody.innerHTML = '';
+            slice.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.classList.add('data-row');
+                tr.innerHTML = buildRowHtml(row);
+
+                const expandTr = document.createElement('tr');
+                expandTr.classList.add('expand-row');
+                expandTr.innerHTML = `<td colspan="7"><div class="expand-content">${buildExpandHtml(row)}</div></td>`;
+
+                tr.addEventListener('click', (e) => {
+                    if (e.target.closest('a')) return;
+                    const content = expandTr.querySelector('.expand-content');
+                    content.classList.toggle('open');
+                });
+
+                tbody.appendChild(tr);
+                tbody.appendChild(expandTr);
+            });
+
+            const isFiltering = document.getElementById('search-input').value || document.getElementById('grade-filter').value;
+            if (isFiltering) {
+                countEl.textContent = `${data.length} of ${allData.length} climbers`;
+                document.getElementById('podium').style.display = 'none';
+                document.getElementById('movers').style.display = 'none';
+            } else {
+                countEl.textContent = '';
+                renderPodium(data);
+                renderMovers(data);
+            }
+
+            if (data.length > visibleCount) {
+                showMoreWrap.style.display = '';
+                document.getElementById('show-more-btn').textContent = `Show More (${data.length - visibleCount} remaining)`;
+            } else {
+                showMoreWrap.style.display = 'none';
+            }
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const minGrade = document.getElementById('grade-filter').value;
+            const minNum = minGrade ? gradeToNum(minGrade) : -1;
+
+            visibleCount = PAGE_SIZE;
+            const filtered = allData.filter(row => {
+                if (query && !row.name.toLowerCase().includes(query) && !row.username.toLowerCase().includes(query)) return false;
+                if (minNum >= 0 && gradeToNum(row.top_send) < minNum) return false;
+                return true;
+            });
+            renderRows(filtered);
+        }
+
+        function showMore() {
+            visibleCount += PAGE_SIZE;
+            renderRows(currentFiltered);
+        }
+
         async function loadLeaderboard() {
             const errorDiv = document.getElementById('error-msg');
-            const tbody = document.querySelector('#leaderboard tbody');
             const dateSpan = document.getElementById('last-updated');
 
             try {
-                // Force fresh fetch with timestamp
                 const url = `data/leaderboard.json?t=${new Date().getTime()}`;
                 const response = await fetch(url);
-
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
                 const jsonResponse = await response.json();
 
-                let leaderboardData = [];
-
-                // Handle both Old (Array) and New (Object) JSON formats safely
                 if (Array.isArray(jsonResponse)) {
-                    leaderboardData = jsonResponse;
+                    allData = jsonResponse;
                     dateSpan.textContent = "Unknown";
                 } else {
-                    leaderboardData = jsonResponse.leaderboard;
-                    const rawDate = jsonResponse.metadata.generated_at;
-                    // Safari doesn't parse "YYYY-MM-DD HH:MM UTC" — normalize to ISO 8601
+                    allData = jsonResponse.leaderboard;
+                    metadata = jsonResponse.metadata || {};
+                    const rawDate = metadata.generated_at;
                     const isoDate = rawDate.replace(' UTC', 'Z').replace(' ', 'T');
                     const d = new Date(isoDate);
                     dateSpan.textContent = isNaN(d) ? rawDate : d.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
                 }
 
-                if (!leaderboardData || leaderboardData.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">No data found.</td></tr>';
-                    return;
+                // Climb of the Week
+                const cotwEl = document.getElementById('cotw');
+                if (metadata.climb_of_the_week) {
+                    const c = metadata.climb_of_the_week;
+                    cotwEl.innerHTML = `<div class="cotw">
+                        <div class="cotw-icon">🔥</div>
+                        <div>
+                            <div class="cotw-label">Climb of the Week</div>
+                            <div class="cotw-name">${c.name}</div>
+                            <div class="cotw-detail">${c.grade.toUpperCase()} • Rating: ${c.adjusted_rating} • ${c.num_senders} sender${c.num_senders !== 1 ? 's' : ''}</div>
+                        </div>
+                    </div>`;
+                    cotwEl.style.display = '';
                 }
 
-                tbody.innerHTML = '';
+                // Load score history for sparklines
+                try {
+                    const histRes = await fetch(`data/history.json?t=${Date.now()}`);
+                    if (histRes.ok) scoreHistory = await histRes.json();
+                } catch (e) { /* sparklines just won't render */ }
 
-                leaderboardData.forEach(row => {
-                    const tr = document.createElement('tr');
+                renderRows(allData);
 
-                    let moveHtml = '<span class="move-same">-</span>';
-                    if (row.movement === 'NEW') {
-                        moveHtml = '<span class="move-new">NEW</span>';
-                    } else if (row.movement > 0) {
-                        moveHtml = `<span class="move-up">▲ ${row.movement}</span>`;
-                    } else if (row.movement < 0) {
-                        moveHtml = `<span class="move-down">▼ ${Math.abs(row.movement)}</span>`;
-                    }
+                document.getElementById('search-input').addEventListener('input', applyFilters);
+                document.getElementById('grade-filter').addEventListener('change', applyFilters);
+                document.getElementById('show-more-btn').addEventListener('click', showMore);
 
-                    const profileUrl = `https://kaya-app.kayaclimb.com/user/${row.username}`;
-
-                    tr.innerHTML = `
-                    <td class="rank-col">#${row.rank}</td>
-                    <td>
-                        <div>
-                            <a href="${profileUrl}" target="_blank" class="profile-link">${row.name}</a>
-                        </div>
-                        <div style="font-size:0.8em; color:#888">@${row.username}</div>
-                    </td>
-                    <td class="score-col">${row.score}</td>
-                    <td class="hide-mobile">${row.top_send}</td>
-                    <td class="hide-mobile">${row.total_sends}</td>
-                    <td>${moveHtml}</td>
-                `;
-                    tbody.appendChild(tr);
+                document.querySelectorAll('.time-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const w = btn.dataset.window;
+                        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        const file = w === '30' ? 'data/leaderboard.json' : `data/leaderboard-${w}d.json`;
+                        try {
+                            const res = await fetch(`${file}?t=${Date.now()}`);
+                            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                            const json = await res.json();
+                            allData = Array.isArray(json) ? json : json.leaderboard;
+                            visibleCount = PAGE_SIZE;
+                            applyFilters();
+                        } catch (e) {
+                            console.error('Failed to load', file, e);
+                        }
+                    });
                 });
             } catch (error) {
                 console.error(error);

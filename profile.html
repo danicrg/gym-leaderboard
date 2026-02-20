@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climber Profile — Dogpatch Boulders</title>
+    <meta property="og:title" content="Dogpatch Boulders Climber Profile">
+    <meta property="og:description" content="See climbing stats and ranking at Dogpatch Boulders">
+    <meta property="og:type" content="website">
+    <style>
+        :root {
+            --bg: #f4f4f9;
+            --surface: #ffffff;
+            --text: #333333;
+            --text-heading: #2c3e50;
+            --text-secondary: #666666;
+            --text-muted: #888888;
+            --text-faint: #999999;
+            --border: #eeeeee;
+            --accent: #2980b9;
+            --accent-hover: #1c5980;
+            --green: #27ae60;
+            --red: #c0392b;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --card-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #e0e0e0;
+            --text-heading: #e8e8f0;
+            --text-secondary: #aaaabc;
+            --text-muted: #888899;
+            --text-faint: #666678;
+            --border: #2a2a40;
+            --accent: #5dade2;
+            --accent-hover: #85c1e9;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --card-bg: linear-gradient(135deg, #434e8a 0%, #5a3578 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 28px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .header-wrap { position: relative; }
+
+        .theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .theme-toggle:hover { border-color: var(--accent); }
+
+        h1 { text-align: center; color: var(--text-heading); margin-bottom: 5px; font-size: 1.5em; }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .subtitle a { color: var(--accent); text-decoration: none; }
+        .subtitle a:hover { text-decoration: underline; }
+
+        .search-wrap {
+            margin-bottom: 24px;
+        }
+
+        .search-wrap input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1em;
+            outline: none;
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .search-wrap input:focus {
+            border-color: var(--accent);
+        }
+
+        .autocomplete-list {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .autocomplete-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .autocomplete-item:hover { background: var(--bg); }
+        .autocomplete-item:last-child { border-bottom: none; }
+
+        .ac-name { font-weight: 600; color: var(--text); }
+        .ac-sub { color: var(--text-muted); font-size: 0.85em; margin-left: 6px; }
+
+        /* Stats Card (the shareable thing) */
+        .stats-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px 28px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -20%;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .card-name {
+            font-size: 1.5em;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .card-username {
+            font-size: 0.85em;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .card-rank {
+            font-size: 2.2em;
+            font-weight: 900;
+            opacity: 0.9;
+            line-height: 1;
+        }
+
+        .card-rank-label {
+            font-size: 0.65em;
+            opacity: 0.6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .card-stat {
+            text-align: center;
+        }
+
+        .card-stat-value {
+            font-size: 1.6em;
+            font-weight: 800;
+        }
+
+        .card-stat-label {
+            font-size: 0.72em;
+            opacity: 0.65;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+
+        .card-branding {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.7em;
+            opacity: 0.45;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        /* Pyramid below the card */
+        .detail-section {
+            margin-top: 28px;
+        }
+
+        .detail-title {
+            font-size: 0.78em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .pyramid-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .pyramid-grade {
+            width: 32px;
+            font-weight: 700;
+            font-size: 0.85em;
+            color: var(--text);
+            text-align: right;
+        }
+
+        .pyramid-bar-track {
+            flex: 1;
+            height: 22px;
+            background: var(--bg);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .pyramid-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.75em;
+            font-weight: 700;
+            color: white;
+            min-width: 24px;
+            transition: width 0.3s;
+        }
+
+        .sends-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88em;
+        }
+
+        .sends-table th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.78em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 8px 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .sends-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .sends-table td:first-child { font-weight: 600; color: var(--text); }
+
+        .share-bar {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .share-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-size: 0.88em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .share-btn:hover { opacity: 0.85; }
+
+        .share-msg {
+            font-size: 0.82em;
+            color: var(--green);
+            margin-top: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: var(--text-faint);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .footer a { color: var(--text-muted); font-weight: bold; text-decoration: none; }
+
+        @media (max-width: 600px) {
+            body { padding: 8px; }
+            .container { padding: 16px; border-radius: 0; box-shadow: none; }
+            .card-name { font-size: 1.2em; }
+            .card-rank { font-size: 1.8em; }
+            .card-stat-value { font-size: 1.3em; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-wrap">
+            <button class="theme-toggle" id="theme-toggle">🌙</button>
+            <h1>Climber Profile</h1>
+        </div>
+        <div class="subtitle">
+            <a href="index.html">Leaderboard</a> •
+            <a href="compare.html">Compare</a>
+        </div>
+
+        <div class="search-wrap">
+            <input type="text" id="search-input" placeholder="Search for a climber...">
+            <div class="autocomplete-list" id="ac-list" style="display:none;"></div>
+        </div>
+
+        <div id="profile-area"></div>
+
+        <div class="footer">
+            <p>Created by <a href="https://github.com/danicrg" target="_blank">danicrg</a></p>
+        </div>
+    </div>
+
+    <script>
+        (function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark))
+                document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            document.getElementById('theme-toggle').textContent = isDark ? '🌙' : '☀️';
+        });
+        document.getElementById('theme-toggle').textContent =
+            document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+
+        let allData = [];
+
+        function gradeToNum(g) {
+            if (!g) return -1;
+            const m = g.toLowerCase().replace('v', '').trim();
+            if (m === '?') return -1;
+            return parseInt(m.split('-').pop()) || 0;
+        }
+
+        function renderProfile(climber) {
+            const area = document.getElementById('profile-area');
+
+            let pyramidHtml = '';
+            if (climber.grade_pyramid) {
+                const sorted = Object.entries(climber.grade_pyramid)
+                    .sort((a, b) => gradeToNum(b[0]) - gradeToNum(a[0]));
+                const maxCount = Math.max(...sorted.map(([, c]) => c));
+                const bars = sorted.map(([g, c]) => {
+                    const pct = Math.max((c / maxCount) * 100, 8);
+                    return `<div class="pyramid-row">
+                        <span class="pyramid-grade">${g}</span>
+                        <div class="pyramid-bar-track">
+                            <div class="pyramid-bar-fill" style="width:${pct}%">${c}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+                pyramidHtml = `
+                    <div class="detail-section">
+                        <div class="detail-title">Grade Pyramid</div>
+                        ${bars}
+                    </div>
+                `;
+            }
+
+            let sendsHtml = '';
+            if (climber.sends && climber.sends.length > 0) {
+                const rows = climber.sends.map(s => `
+                    <tr>
+                        <td>${s.grade.toUpperCase()}</td>
+                        <td>${s.name}</td>
+                        <td style="font-family:monospace;text-align:right">${s.rating}</td>
+                    </tr>
+                `).join('');
+                sendsHtml = `
+                    <div class="detail-section">
+                        <div class="detail-title">Top Sends</div>
+                        <table class="sends-table">
+                            <thead><tr><th>Grade</th><th>Climb</th><th style="text-align:right">Rating</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            const shareUrl = `${window.location.origin}${window.location.pathname}?u=${climber.username}`;
+
+            area.innerHTML = `
+                <div class="stats-card" id="stats-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-name">${climber.name}</div>
+                            <div class="card-username">@${climber.username}</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="card-rank">#${climber.rank}</div>
+                            <div class="card-rank-label">Rank</div>
+                        </div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="card-stat">
+                            <div class="card-stat-value">${climber.score}</div>
+                            <div class="card-stat-label">Score</div>
+                        </div>
+                        <div class="card-stat">
+                            <div class="card-stat-value">${climber.top_send.toUpperCase()}</div>
+                            <div class="card-stat-label">Top Send</div>
+                        </div>
+                        <div class="card-stat">
+                            <div class="card-stat-value">${climber.total_sends}</div>
+                            <div class="card-stat-label">Sends</div>
+                        </div>
+                    </div>
+                    <div class="card-branding">Dogpatch Boulders Leaderboard</div>
+                </div>
+
+                <div class="share-bar">
+                    <button class="share-btn" onclick="copyShareLink()">Copy Share Link</button>
+                    <div class="share-msg" id="share-msg"></div>
+                </div>
+
+                ${pyramidHtml}
+                ${sendsHtml}
+            `;
+
+            document.title = `${climber.name} — Dogpatch Boulders`;
+            history.replaceState(null, '', `?u=${climber.username}`);
+        }
+
+        function copyShareLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                document.getElementById('share-msg').textContent = 'Link copied!';
+                setTimeout(() => document.getElementById('share-msg').textContent = '', 2000);
+            });
+        }
+
+        function setupSearch() {
+            const input = document.getElementById('search-input');
+            const list = document.getElementById('ac-list');
+
+            input.addEventListener('input', () => {
+                const q = input.value.toLowerCase().trim();
+                if (!q) { list.style.display = 'none'; return; }
+                const matches = allData.filter(r =>
+                    r.name.toLowerCase().includes(q) || r.username.toLowerCase().includes(q)
+                ).slice(0, 8);
+                if (!matches.length) { list.style.display = 'none'; return; }
+                list.innerHTML = matches.map(r => `
+                    <div class="autocomplete-item" data-username="${r.username}">
+                        <span class="ac-name">${r.name}</span>
+                        <span class="ac-sub">@${r.username} • #${r.rank}</span>
+                    </div>
+                `).join('');
+                list.style.display = '';
+
+                list.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const climber = allData.find(r => r.username === item.dataset.username);
+                        input.value = climber.name;
+                        list.style.display = 'none';
+                        renderProfile(climber);
+                    });
+                });
+            });
+
+            input.addEventListener('blur', () => {
+                setTimeout(() => list.style.display = 'none', 200);
+            });
+        }
+
+        async function init() {
+            try {
+                const res = await fetch(`data/leaderboard.json?t=${Date.now()}`);
+                const json = await res.json();
+                allData = Array.isArray(json) ? json : json.leaderboard;
+
+                setupSearch();
+
+                const params = new URLSearchParams(window.location.search);
+                const u = params.get('u');
+                if (u) {
+                    const climber = allData.find(r => r.username === u);
+                    if (climber) {
+                        document.getElementById('search-input').value = climber.name;
+                        renderProfile(climber);
+                    }
+                }
+            } catch (e) {
+                document.getElementById('profile-area').innerHTML =
+                    `<div style="text-align:center;color:var(--red);padding:20px;">Error: ${e.message}</div>`;
+            }
+        }
+        init();
+    </script>
+</body>
+
+</html>

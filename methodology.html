@@ -21,6 +21,79 @@
             --orange: #e67e22;
             --purple: #8e44ad;
             --blue: #2980b9;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --bar-track: #f0f0f5;
+            --tldr-bg: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
+            --tldr-border: #d0e3f0;
+            --winner-bg: #f0faf4;
+            --callout-blue-bg: #f0f7ff;
+            --callout-green-bg: #f0faf4;
+            --callout-orange-bg: #fef8f0;
+            --flow-purple-bg: #f5f0ff;
+            --flow-purple-border: #c9b1e8;
+            --flow-blue-bg: #f0f7ff;
+            --flow-blue-border: #b0d0ee;
+            --flow-green-bg: #f0faf4;
+            --flow-green-border: #a8dfc0;
+            --adjust-base-bg: #f0f0f5;
+            --adjust-up-bg: #f0faf4;
+            --adjust-up-border: #a8dfc0;
+            --adjust-down-bg: #fef0f0;
+            --adjust-down-border: #f0b0b0;
+            --adjust-result-bg: #f0f7ff;
+            --icon-bg-blue: #f0f7ff;
+            --icon-bg-green: #f0faf4;
+            --icon-bg-orange: #fef8f0;
+            --icon-bg-purple: #f5f0ff;
+            --icon-bg-red: #fef0f0;
+            --icon-bg-neutral: #f0f0f5;
+            --new-badge-bg: #fff3cd;
+            --footer-link: #777;
+        }
+
+        [data-theme="dark"] {
+            --text: #e0e0e8;
+            --text-light: #aaaabc;
+            --text-muted: #777788;
+            --accent: #5dade2;
+            --accent-hover: #85c1e9;
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --border: #2a2a40;
+            --code-bg: #1e1e38;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --orange: #f5b041;
+            --purple: #bb8fce;
+            --blue: #5dade2;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --bar-track: #1e1e38;
+            --tldr-bg: linear-gradient(135deg, #162840 0%, #1a2a40 100%);
+            --tldr-border: #2a3a55;
+            --winner-bg: #1a3328;
+            --callout-blue-bg: #162840;
+            --callout-green-bg: #1a3328;
+            --callout-orange-bg: #2e2218;
+            --flow-purple-bg: #251a38;
+            --flow-purple-border: #5a3578;
+            --flow-blue-bg: #162840;
+            --flow-blue-border: #2a4a68;
+            --flow-green-bg: #1a3328;
+            --flow-green-border: #2a5540;
+            --adjust-base-bg: #1e1e38;
+            --adjust-up-bg: #1a3328;
+            --adjust-up-border: #2a5540;
+            --adjust-down-bg: #3d1a1a;
+            --adjust-down-border: #5a2a2a;
+            --adjust-result-bg: #162840;
+            --icon-bg-blue: #162840;
+            --icon-bg-green: #1a3328;
+            --icon-bg-orange: #2e2218;
+            --icon-bg-purple: #251a38;
+            --icon-bg-red: #3d1a1a;
+            --icon-bg-neutral: #1e1e38;
+            --new-badge-bg: #3d3520;
+            --footer-link: #888899;
         }
 
         * {
@@ -35,6 +108,7 @@
             padding: 20px;
             line-height: 1.7;
             -webkit-font-smoothing: antialiased;
+            transition: background 0.3s, color 0.3s;
         }
 
         .container {
@@ -43,7 +117,29 @@
             background: var(--surface);
             padding: 48px 40px;
             border-radius: 12px;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 16px var(--shadow);
+            transition: background 0.3s;
+            position: relative;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            line-height: 1;
+            transition: border-color 0.2s;
+            z-index: 2;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
         }
 
         /* Navigation */
@@ -118,8 +214,8 @@
 
         /* TLDR Box */
         .tldr {
-            background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
-            border: 1px solid #d0e3f0;
+            background: var(--tldr-bg);
+            border: 1px solid var(--tldr-border);
             border-radius: 10px;
             padding: 24px 28px;
             margin: 0 0 40px 0;
@@ -169,7 +265,7 @@
 
         .versus-card.winner {
             border-color: var(--green);
-            background: #f0faf4;
+            background: var(--winner-bg);
         }
 
         .versus-card .label {
@@ -232,7 +328,7 @@
         .bar-track {
             flex: 1;
             height: 32px;
-            background: #f0f0f5;
+            background: var(--bar-track);
             border-radius: 6px;
             position: relative;
             overflow: hidden;
@@ -286,7 +382,7 @@
         .weight-bar-track {
             flex: 1;
             height: 28px;
-            background: #f0f0f5;
+            background: var(--bar-track);
             border-radius: 6px;
             position: relative;
         }
@@ -326,17 +422,17 @@
         }
 
         .callout.blue {
-            background: #f0f7ff;
+            background: var(--callout-blue-bg);
             border-left: 3px solid var(--accent);
         }
 
         .callout.green {
-            background: #f0faf4;
+            background: var(--callout-green-bg);
             border-left: 3px solid var(--green);
         }
 
         .callout.orange {
-            background: #fef8f0;
+            background: var(--callout-orange-bg);
             border-left: 3px solid var(--orange);
         }
 
@@ -367,20 +463,20 @@
         }
 
         .flow-step.purple {
-            background: #f5f0ff;
-            border-color: #c9b1e8;
+            background: var(--flow-purple-bg);
+            border-color: var(--flow-purple-border);
             color: var(--purple);
         }
 
         .flow-step.blue {
-            background: #f0f7ff;
-            border-color: #b0d0ee;
+            background: var(--flow-blue-bg);
+            border-color: var(--flow-blue-border);
             color: var(--blue);
         }
 
         .flow-step.green {
-            background: #f0faf4;
-            border-color: #a8dfc0;
+            background: var(--flow-green-bg);
+            border-color: var(--flow-green-border);
             color: var(--green);
         }
 
@@ -460,12 +556,12 @@
         }
 
         .adjust-box.base {
-            background: #f0f0f5;
+            background: var(--adjust-base-bg);
         }
 
         .adjust-box.up {
-            background: #f0faf4;
-            border: 1px solid #a8dfc0;
+            background: var(--adjust-up-bg);
+            border: 1px solid var(--adjust-up-border);
         }
 
         .adjust-box.up .val {
@@ -473,8 +569,8 @@
         }
 
         .adjust-box.down {
-            background: #fef0f0;
-            border: 1px solid #f0b0b0;
+            background: var(--adjust-down-bg);
+            border: 1px solid var(--adjust-down-border);
         }
 
         .adjust-box.down .val {
@@ -482,7 +578,7 @@
         }
 
         .adjust-box.result {
-            background: #f0f7ff;
+            background: var(--adjust-result-bg);
             border: 2px solid var(--accent);
         }
 
@@ -508,7 +604,7 @@
         }
 
         .footer a {
-            color: #777;
+            color: var(--footer-link);
             font-weight: bold;
             text-decoration: none;
         }
@@ -573,14 +669,21 @@
 
 <body>
     <div class="container">
+        <button class="theme-toggle" id="theme-toggle">🌙</button>
 
         <a href="index.html" class="back-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
                 <path fill-rule="evenodd"
                     d="M9.78 4.22a.75.75 0 0 1 0 1.06L7.06 8l2.72 2.72a.75.75 0 1 1-1.06 1.06L5.47 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.75.75 0 0 1 1.06 0Z" />
             </svg>
-            Back to Leaderboard
+            Leaderboard
         </a>
+        <span style="color:var(--text-muted); font-size:0.85em; margin: 0 4px 32px;">•</span>
+        <a href="climbs.html" class="back-link">Hardest Climbs</a>
+        <span style="color:var(--text-muted); font-size:0.85em; margin: 0 4px 32px;">•</span>
+        <a href="compare.html" class="back-link">Compare</a>
+        <span style="color:var(--text-muted); font-size:0.85em; margin: 0 4px 32px;">•</span>
+        <a href="profile.html" class="back-link">Profile</a>
 
         <h1>How Scoring Works</h1>
         <p class="page-subtitle">
@@ -604,7 +707,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#f0f7ff;">&#x1F3AF;</span>
+                <span class="icon" style="background:var(--icon-bg-blue);">&#x1F3AF;</span>
                 The Big Idea
             </h2>
             <p>
@@ -641,7 +744,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#f0faf4;">&#x1F4AA;</span>
+                <span class="icon" style="background:var(--icon-bg-green);">&#x1F4AA;</span>
                 Your Score = Your Hardest Sends
             </h2>
             <p>
@@ -711,7 +814,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#fef8f0;">&#x1F3CB;</span>
+                <span class="icon" style="background:var(--icon-bg-orange);">&#x1F3CB;</span>
                 Volume Can't Beat Difficulty
             </h2>
             <p>
@@ -790,7 +893,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#f5f0ff;">&#x2696;&#xFE0F;</span>
+                <span class="icon" style="background:var(--icon-bg-purple);">&#x2696;&#xFE0F;</span>
                 Not All V6s Are Equal
             </h2>
             <p>
@@ -876,7 +979,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#fef0f0;">&#x1F48E;</span>
+                <span class="icon" style="background:var(--icon-bg-red);">&#x1F48E;</span>
                 Rare Climbs Are Worth More
             </h2>
             <p>
@@ -933,7 +1036,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#f0f7ff;">&#x1F9E9;</span>
+                <span class="icon" style="background:var(--icon-bg-blue);">&#x1F9E9;</span>
                 Putting It All Together
             </h2>
             <p>
@@ -1007,7 +1110,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#f0f0f5;">&#x1F504;</span>
+                <span class="icon" style="background:var(--icon-bg-neutral);">&#x1F504;</span>
                 The Chicken-and-Egg Problem
             </h2>
             <p>
@@ -1059,7 +1162,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#f0f7ff;">&#x1F4C5;</span>
+                <span class="icon" style="background:var(--icon-bg-blue);">&#x1F4C5;</span>
                 The 30-Day Window
             </h2>
             <p>
@@ -1077,7 +1180,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#fef8f0;">&#x1F4C8;</span>
+                <span class="icon" style="background:var(--icon-bg-orange);">&#x1F4C8;</span>
                 Movement Tracking
             </h2>
             <p>
@@ -1104,7 +1207,7 @@
                         <td>No change</td>
                     </tr>
                     <tr>
-                        <td><span style="color: var(--orange); font-weight: bold; background: #fff3cd; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">NEW</span></td>
+                        <td><span style="color: var(--orange); font-weight: bold; background: var(--new-badge-bg); padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">NEW</span></td>
                         <td>First time appearing on the leaderboard</td>
                     </tr>
                 </tbody>
@@ -1144,7 +1247,7 @@
         <!-- ============================================ -->
         <div class="section">
             <h2>
-                <span class="icon" style="background:#f0f0f5;">&#x2699;&#xFE0F;</span>
+                <span class="icon" style="background:var(--icon-bg-neutral);">&#x2699;&#xFE0F;</span>
                 Technical Details
             </h2>
             <p>For those who want the exact formulas and parameters.</p>
@@ -1218,6 +1321,23 @@
         </div>
 
     </div>
+
+    <script>
+        (function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark))
+                document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            document.getElementById('theme-toggle').textContent = isDark ? '🌙' : '☀️';
+        });
+        document.getElementById('theme-toggle').textContent =
+            document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+    </script>
 </body>
 
 </html>
