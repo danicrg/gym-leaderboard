@@ -72,7 +72,9 @@
             box-shadow: 0 2px 10px var(--shadow);
         }
 
-        .header-wrap { position: relative; }
+        .header-wrap {
+            position: relative;
+        }
 
         .theme-toggle {
             position: absolute;
@@ -87,7 +89,9 @@
             line-height: 1;
         }
 
-        .theme-toggle:hover { border-color: var(--accent); }
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
 
         h1 {
             text-align: center;
@@ -107,7 +111,9 @@
             text-decoration: none;
         }
 
-        .subtitle a:hover { text-decoration: underline; }
+        .subtitle a:hover {
+            text-decoration: underline;
+        }
 
         .controls {
             display: flex;
@@ -156,7 +162,8 @@
             margin-top: 16px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid var(--border);
@@ -215,8 +222,13 @@
             font-size: 0.88em;
         }
 
-        td a { text-decoration: none; }
-        td a:hover { text-decoration: underline; }
+        td a {
+            text-decoration: none;
+        }
+
+        td a:hover {
+            text-decoration: underline;
+        }
 
         .show-more-wrap {
             text-align: center;
@@ -248,15 +260,40 @@
             padding-top: 20px;
         }
 
-        .footer a { color: var(--text-muted); font-weight: bold; text-decoration: none; }
-        .footer a:hover { text-decoration: underline; }
+        .footer a {
+            color: var(--text-muted);
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
 
         @media (max-width: 600px) {
-            body { padding: 8px; }
-            .container { padding: 12px; border-radius: 0; box-shadow: none; }
-            h1 { font-size: 1.4em; }
-            th, td { padding: 8px 6px; font-size: 0.88em; }
-            .hide-mobile { display: none; }
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                padding: 12px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            h1 {
+                font-size: 1.4em;
+            }
+
+            th,
+            td {
+                padding: 8px 6px;
+                font-size: 0.88em;
+            }
+
+            .hide-mobile {
+                display: none;
+            }
         }
     </style>
 </head>
