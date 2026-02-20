@@ -430,7 +430,7 @@
                 const rows = climber.sends.map(s => `
                     <tr>
                         <td>${s.grade.toUpperCase()}</td>
-                        <td>${s.slug ? `<a href="https://kaya-app.kayaclimb.com/climb/${s.slug}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${s.name}</a>` : s.name}</td>
+                        <td>${s.slug ? (() => { const m = s.slug.match(/(\d+)$/); const u = m ? `https://app.kayaclimb.com/share/climb?climb_id=${m[1]}` : `https://kaya-app.kayaclimb.com/climb/${s.slug}`; return `<a href="${u}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${s.name}</a>`; })() : s.name}</td>
                         <td style="font-family:monospace;text-align:right">${s.rating}</td>
                     </tr>
                 `).join('');

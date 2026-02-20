@@ -848,7 +848,7 @@
             const icons = ['🥇', '🥈', '🥉'];
             podium.innerHTML = [1, 0, 2].map(i => {
                 const r = data[i];
-                const url = `https://kaya-app.kayaclimb.com/user/${r.username}`;
+                const url = r.user_id ? `https://app.kayaclimb.com/share/profile?id=${r.user_id}` : `https://kaya-app.kayaclimb.com/user/${r.username}`;
                 return `<div class="podium-card ${medals[i]}">
                     <div class="podium-medal">${icons[i]}</div>
                     <div class="podium-name"><a href="${url}" target="_blank">${r.name}</a></div>
@@ -902,7 +902,7 @@
             } else if (row.movement < 0) {
                 moveHtml = `<span class="move-down">▼ ${Math.abs(row.movement)}</span>`;
             }
-            const profileUrl = `https://kaya-app.kayaclimb.com/user/${row.username}`;
+            const profileUrl = row.user_id ? `https://app.kayaclimb.com/share/profile?id=${row.user_id}` : `https://kaya-app.kayaclimb.com/user/${row.username}`;
             const sparkline = buildSparkline(row.username);
             return `
                 <td class="rank-col">#${row.rank}</td>
@@ -924,7 +924,7 @@
                 const items = row.sends.map(s => `
                     <div class="send-item">
                         <span class="send-grade">${s.grade.toUpperCase()}</span>
-                        <span class="send-name">${s.slug ? `<a href="https://kaya-app.kayaclimb.com/climb/${s.slug}" target="_blank" rel="noopener" style="color:var(--accent)">${s.name}</a>` : s.name}</span>
+                        <span class="send-name">${s.slug ? (() => { const m = s.slug.match(/(\d+)$/); const u = m ? `https://app.kayaclimb.com/share/climb?climb_id=${m[1]}` : `https://kaya-app.kayaclimb.com/climb/${s.slug}`; return `<a href="${u}" target="_blank" rel="noopener" style="color:var(--accent)">${s.name}</a>`; })() : s.name}</span>
                         <span class="send-rating">${s.rating} pts</span>
                     </div>
                 `).join('');
@@ -1037,7 +1037,7 @@
                         <div class="cotw-icon">🔥</div>
                         <div>
                             <div class="cotw-label">Climb of the Week</div>
-                            <div class="cotw-name">${c.slug ? `<a href="https://kaya-app.kayaclimb.com/climb/${c.slug}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">${c.name}</a>` : c.name}</div>
+                            <div class="cotw-name">${c.slug ? (() => { const m = c.slug.match(/(\d+)$/); const u = m ? `https://app.kayaclimb.com/share/climb?climb_id=${m[1]}` : `https://kaya-app.kayaclimb.com/climb/${c.slug}`; return `<a href="${u}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">${c.name}</a>`; })() : c.name}</div>
                             <div class="cotw-detail">${c.grade.toUpperCase()} • Rating: ${c.adjusted_rating} • ${c.num_senders} sender${c.num_senders !== 1 ? 's' : ''}</div>
                         </div>
                     </div>`;

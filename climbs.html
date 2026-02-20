@@ -389,11 +389,13 @@
                 let diffClass = 'neutral', diffText = '—';
                 if (diff > 0) { diffClass = 'up'; diffText = `+${diff}`; }
                 else if (diff < 0) { diffClass = 'down'; diffText = `${diff}`; }
+                const climbId = c.slug ? (c.slug.match(/(\d+)$/) || [])[1] : '';
+                const climbUrl = climbId ? `https://app.kayaclimb.com/share/climb?climb_id=${climbId}` : `https://kaya-app.kayaclimb.com/climb/${c.slug || ''}`;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="rank-col">${c.rank}</td>
-                    <td style="font-weight:600"><a href="https://kaya-app.kayaclimb.com/climb/${c.slug}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${c.name}</a></td>
+                    <td style="font-weight:600"><a href="${climbUrl}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${c.name}</a></td>
                     <td><span class="grade-badge">${c.grade.toUpperCase()}</span></td>
                     <td class="rating-col">${c.adjusted_rating}</td>
                     <td class="hide-mobile"><span class="diff-badge ${diffClass}">${diffText}</span></td>

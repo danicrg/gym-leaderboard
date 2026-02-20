@@ -190,6 +190,7 @@ class KayaRanker:
             send_details.sort(key=lambda x: x['rating'], reverse=True)
 
             leaderboard.append({
+                'user_id': uid,
                 'username': user['username'],
                 'name': user['name'],
                 'score': int(user['rating']),

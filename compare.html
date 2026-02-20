@@ -422,7 +422,7 @@
                             ${shared.map(n => {
                                 const slug = sendsMapA[n];
                                 return slug
-                                    ? `<a href="https://kaya-app.kayaclimb.com/climb/${slug}" target="_blank" rel="noopener" class="shared-chip" style="text-decoration:none;color:inherit;">${n}</a>`
+                                    ? (() => { const m = slug.match(/(\d+)$/); const u = m ? `https://app.kayaclimb.com/share/climb?climb_id=${m[1]}` : `https://kaya-app.kayaclimb.com/climb/${slug}`; return `<a href="${u}" target="_blank" rel="noopener" class="shared-chip" style="text-decoration:none;color:inherit;">${n}</a>`; })()
                                     : `<span class="shared-chip">${n}</span>`;
                             }).join('')}
                         </div>
