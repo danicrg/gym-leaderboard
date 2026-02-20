@@ -408,9 +408,10 @@
             const [gradeWA, gradeWB] = w(gradeToNum(a.top_send), gradeToNum(b.top_send));
             const [volWA, volWB] = w(a.total_sends, b.total_sends);
 
-            const sendNamesA = new Set((a.sends || []).map(s => s.name));
+            const sendsMapA = {};
+            (a.sends || []).forEach(s => { sendsMapA[s.name] = s.slug; });
             const sendNamesB = new Set((b.sends || []).map(s => s.name));
-            const shared = [...sendNamesA].filter(n => sendNamesB.has(n));
+            const shared = Object.keys(sendsMapA).filter(n => sendNamesB.has(n));
 
             let sharedHtml = '';
             if (shared.length > 0) {
@@ -418,7 +419,12 @@
                     <div class="shared-section">
                         <div class="shared-title">Climbs They Both Sent (top 10 overlap)</div>
                         <div class="shared-list">
-                            ${shared.map(n => `<span class="shared-chip">${n}</span>`).join('')}
+                            ${shared.map(n => {
+                                const slug = sendsMapA[n];
+                                return slug
+                                    ? `<a href="https://kaya-app.kayaclimb.com/climb/${slug}" target="_blank" rel="noopener" class="shared-chip" style="text-decoration:none;color:inherit;">${n}</a>`
+                                    : `<span class="shared-chip">${n}</span>`;
+                            }).join('')}
                         </div>
                     </div>
                 `;

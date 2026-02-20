@@ -122,9 +122,15 @@ class KayaRanker:
                 
             self.users[uid]['sends'].append(cid)
 
+            color_name = (c_data.get('color') or {}).get('name', '')
+            if color_name:
+                display_name = f"{color_name} {grade_str.upper()}".strip()
+            else:
+                display_name = c_data.get('name') or c_data.get('slug')
+
             if cid not in self.climbs:
                 self.climbs[cid] = {
-                    'name': c_data.get('name') or c_data.get('slug'),
+                    'name': display_name,
                     'grade_name': grade_str,
                     'base_rating': base_points,
                     'current_rating': base_points,
@@ -173,6 +179,7 @@ class KayaRanker:
                 climb = self.climbs[cid]
                 gname = climb['grade_name']
                 send_details.append({
+                    'slug': cid,
                     'name': climb['name'],
                     'grade': gname,
                     'rating': int(climb['current_rating']),

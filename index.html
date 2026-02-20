@@ -912,7 +912,7 @@
                 const items = row.sends.map(s => `
                     <div class="send-item">
                         <span class="send-grade">${s.grade.toUpperCase()}</span>
-                        <span class="send-name">${s.name}</span>
+                        <span class="send-name">${s.slug ? `<a href="https://kaya-app.kayaclimb.com/climb/${s.slug}" target="_blank" rel="noopener" style="color:var(--accent)">${s.name}</a>` : s.name}</span>
                         <span class="send-rating">${s.rating} pts</span>
                     </div>
                 `).join('');
