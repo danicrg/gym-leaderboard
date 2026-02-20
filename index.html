@@ -28,8 +28,6 @@
             --error-bg: #ffeeee;
             --shadow: rgba(0, 0, 0, 0.1);
             --input-focus-ring: rgba(41, 128, 185, 0.1);
-            --show-more-bg: #f0f4f8;
-            --show-more-hover: #e4ecf4;
         }
 
         [data-theme="dark"] {
@@ -54,8 +52,6 @@
             --error-bg: #3d1a1a;
             --shadow: rgba(0, 0, 0, 0.4);
             --input-focus-ring: rgba(93, 173, 226, 0.2);
-            --show-more-bg: #1e1e38;
-            --show-more-hover: #2a2a48;
         }
 
         body {
@@ -282,29 +278,6 @@
             font-size: 0.82em;
             color: var(--text-faint);
             padding: 4px 0;
-        }
-
-        /* Show More Button */
-        .show-more-wrap {
-            text-align: center;
-            padding: 20px 0 8px;
-        }
-
-        .show-more-btn {
-            background: var(--show-more-bg);
-            border: 1px solid var(--border-input);
-            border-radius: 8px;
-            padding: 10px 28px;
-            font-size: 0.9em;
-            font-weight: 600;
-            color: var(--accent);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .show-more-btn:hover {
-            background: var(--show-more-hover);
-            border-color: var(--accent);
         }
 
         /* Podium */
@@ -801,9 +774,7 @@
             </tbody>
         </table>
 
-        <div class="show-more-wrap" id="show-more-wrap" style="display:none;">
-            <button class="show-more-btn" id="show-more-btn">Show More</button>
-        </div>
+        <div id="scroll-sentinel" style="height:1px;"></div>
 
         <div class="footer">
             <p>Data sourced from the <a href="https://kaya-app.kayaclimb.com" target="_blank">Kaya app</a>. Log your
@@ -979,14 +950,11 @@
         function renderRows(data) {
             const tbody = document.querySelector('#leaderboard tbody');
             const countEl = document.getElementById('result-count');
-            const showMoreWrap = document.getElementById('show-more-wrap');
-
             currentFiltered = data;
 
             if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">No climbers match your filters.</td></tr>';
                 countEl.textContent = '0 results';
-                showMoreWrap.style.display = 'none';
                 return;
             }
 
@@ -1022,12 +990,6 @@
                 renderMovers(data);
             }
 
-            if (data.length > visibleCount) {
-                showMoreWrap.style.display = '';
-                document.getElementById('show-more-btn').textContent = `Show More (${data.length - visibleCount} remaining)`;
-            } else {
-                showMoreWrap.style.display = 'none';
-            }
         }
 
         function applyFilters() {
@@ -1042,11 +1004,6 @@
                 return true;
             });
             renderRows(filtered);
-        }
-
-        function showMore() {
-            visibleCount += PAGE_SIZE;
-            renderRows(currentFiltered);
         }
 
         async function loadLeaderboard() {
@@ -1097,7 +1054,14 @@
 
                 document.getElementById('search-input').addEventListener('input', applyFilters);
                 document.getElementById('grade-filter').addEventListener('change', applyFilters);
-                document.getElementById('show-more-btn').addEventListener('click', showMore);
+
+                const sentinel = document.getElementById('scroll-sentinel');
+                new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && visibleCount < currentFiltered.length) {
+                        visibleCount += PAGE_SIZE;
+                        renderRows(currentFiltered);
+                    }
+                }, { rootMargin: '200px' }).observe(sentinel);
 
                 document.querySelectorAll('.time-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {

@@ -24,8 +24,6 @@
             --red: #c0392b;
             --shadow: rgba(0, 0, 0, 0.1);
             --input-focus-ring: rgba(41, 128, 185, 0.1);
-            --show-more-bg: #f0f4f8;
-            --show-more-hover: #e4ecf4;
             --badge-up: #e8f8f0;
             --badge-down: #fde8e8;
         }
@@ -48,8 +46,6 @@
             --red: #e74c3c;
             --shadow: rgba(0, 0, 0, 0.4);
             --input-focus-ring: rgba(93, 173, 226, 0.2);
-            --show-more-bg: #1e1e38;
-            --show-more-hover: #2a2a48;
             --badge-up: #1a3328;
             --badge-down: #3d1a1a;
         }
@@ -244,27 +240,6 @@
             text-decoration: underline;
         }
 
-        .show-more-wrap {
-            text-align: center;
-            padding: 20px 0 8px;
-        }
-
-        .show-more-btn {
-            background: var(--show-more-bg);
-            border: 1px solid var(--border-input);
-            border-radius: 8px;
-            padding: 10px 28px;
-            font-size: 0.9em;
-            font-weight: 600;
-            color: var(--accent);
-            cursor: pointer;
-        }
-
-        .show-more-btn:hover {
-            background: var(--show-more-hover);
-            border-color: var(--accent);
-        }
-
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -361,9 +336,7 @@
             <tbody id="tbody"></tbody>
         </table>
 
-        <div class="show-more-wrap" id="show-more-wrap" style="display:none;">
-            <button class="show-more-btn" id="show-more-btn">Show More</button>
-        </div>
+        <div id="scroll-sentinel" style="height:1px;"></div>
 
         <div class="footer">
             <p>Adjusted ratings reflect who actually sends each climb. <a href="methodology.html">Learn more</a>.</p>
@@ -402,12 +375,10 @@
         function render() {
             const tbody = document.getElementById('tbody');
             const countEl = document.getElementById('result-count');
-            const wrap = document.getElementById('show-more-wrap');
 
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No climbs match.</td></tr>';
                 countEl.textContent = '0 results';
-                wrap.style.display = 'none';
                 return;
             }
 
@@ -433,13 +404,6 @@
 
             const isFiltering = document.getElementById('search-input').value || document.getElementById('grade-filter').value;
             countEl.textContent = isFiltering ? `${filtered.length} of ${allClimbs.length} climbs` : '';
-
-            if (filtered.length > visibleCount) {
-                wrap.style.display = '';
-                document.getElementById('show-more-btn').textContent = `Show More (${filtered.length - visibleCount} remaining)`;
-            } else {
-                wrap.style.display = 'none';
-            }
         }
 
         function applyFilters() {
@@ -466,10 +430,14 @@
 
                 document.getElementById('search-input').addEventListener('input', applyFilters);
                 document.getElementById('grade-filter').addEventListener('change', applyFilters);
-                document.getElementById('show-more-btn').addEventListener('click', () => {
-                    visibleCount += PAGE_SIZE;
-                    render();
-                });
+
+                const sentinel = document.getElementById('scroll-sentinel');
+                new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && visibleCount < filtered.length) {
+                        visibleCount += PAGE_SIZE;
+                        render();
+                    }
+                }, { rootMargin: '200px' }).observe(sentinel);
             } catch (e) {
                 document.getElementById('tbody').innerHTML =
                     `<tr><td colspan="6" style="text-align:center;color:var(--red);">Error: ${e.message}</td></tr>`;
