@@ -455,6 +455,92 @@ def main():
         json.dump(climbs_output, f)
     log.info("Saved climb rankings to %s (%d climbs)", CLIMBS_FILE, len(climb_rankings))
 
+    # === BEGIN MONTHLY LEAGUES LOGIC ===
+    log.info("Generating Monthly Leagues...")
+    current_month_str = datetime.now(timezone.utc).strftime("%Y-%m")
+    current_month_start = datetime.strptime(current_month_str, "%Y-%m").replace(tzinfo=timezone.utc)
+    
+    prior_data = []
+    month_data = []
+    for entry in final_data:
+        try:
+            d_str = entry['date'].replace('Z', '+00:00')
+            ascent_date = datetime.fromisoformat(d_str)
+            if ascent_date < current_month_start:
+                prior_data.append(entry)
+            else:
+                month_data.append(entry)
+        except ValueError:
+            continue
+            
+    user_baselines = {}
+    for entry in prior_data:
+        uid = entry['user']['id']
+        grade_str = entry['climb'].get('grade', {}).get('name', 'v0')
+        pts = parse_grade_to_points(grade_str)
+        user_baselines[uid] = max(user_baselines.get(uid, 0), pts)
+        
+    month_max_grades = {}
+    for entry in month_data:
+        uid = entry['user']['id']
+        grade_str = entry['climb'].get('grade', {}).get('name', 'v0')
+        pts = parse_grade_to_points(grade_str)
+        month_max_grades[uid] = max(month_max_grades.get(uid, 0), pts)
+        
+    def get_league_from_points(pts):
+        if pts <= 1200: return 'Beginner'      # V0-V2
+        if pts <= 1400: return 'Intermediate'  # V3-V4
+        if pts <= 1700: return 'Advanced'      # V5-V7
+        return 'Elite'                         # V8+
+        
+    user_leagues = {}
+    all_users = set(list(user_baselines.keys()) + list(month_max_grades.keys()))
+    for uid in all_users:
+        if uid in user_baselines:
+            user_leagues[uid] = get_league_from_points(user_baselines[uid])
+        else:
+            user_leagues[uid] = get_league_from_points(month_max_grades[uid])
+            
+    league_ranker = KayaRanker(month_data, days_window=36500)
+    monthly_leaderboard, _, monthly_cow = league_ranker.run()
+    
+    leagues = {
+        'Elite': [],
+        'Advanced': [],
+        'Intermediate': [],
+        'Beginner': []
+    }
+    for row in monthly_leaderboard:
+        l = user_leagues.get(row['user_id'], 'Beginner')
+        leagues[l].append(row)
+        
+    for l_name, l_list in leagues.items():
+        for i, row in enumerate(l_list):
+            row['rank'] = i + 1
+            row['movement'] = 0 
+            
+    leagues_output = {
+        "metadata": {
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "gym_id": GYM_ID,
+            "gym_name": GYM_NAME,
+            "month": current_month_str
+        },
+        "leagues": leagues
+    }
+    if monthly_cow:
+        leagues_output["metadata"]["climb_of_the_week"] = monthly_cow
+        
+    leagues_file_specific = f'data/leagues-{current_month_str}.json'
+    leagues_file_current = 'data/leagues-current.json'
+    
+    with open(leagues_file_specific, 'w') as f:
+        json.dump(leagues_output, f)
+    with open(leagues_file_current, 'w') as f:
+        json.dump(leagues_output, f)
+    log.info("Saved monthly leagues to %s and %s", leagues_file_specific, leagues_file_current)
+    # === END MONTHLY LEAGUES LOGIC ===
+
     # 10. Generate time-window variants (7d, 14d)
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     for window in TIME_WINDOWS:
