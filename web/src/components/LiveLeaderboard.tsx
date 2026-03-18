@@ -20,6 +20,7 @@ type Climber = {
   grade_pyramid: Record<string, number>;
   sends: Array<{ name: string; grade: string; rating: number; slug?: string }>;
   movement: number | 'NEW';
+  photo_url?: string;
 };
 
 type Metadata = {
@@ -259,7 +260,16 @@ function ExpandableRow({ climber, history }: { climber: Climber, history: any })
         )}
       >
         <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap w-12 sm:w-auto">
-           <span className="font-bold text-neutral-500 dark:text-neutral-400">#{climber.rank}</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+             <span className="font-bold text-neutral-500 dark:text-neutral-400 w-6 text-right block shrink-0">#{climber.rank}</span>
+             {climber.photo_url ? (
+               <img src={climber.photo_url} alt={climber.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shadow-sm border border-neutral-200 dark:border-neutral-700 mx-2 shrink-0" />
+             ) : (
+               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shadow-sm border border-neutral-200 dark:border-neutral-700 mx-2 shrink-0">
+                 <span className="text-neutral-500 dark:text-neutral-400 font-bold text-xs">{climber.name.charAt(0)}</span>
+               </div>
+             )}
+          </div>
         </td>
         <td className="px-2 sm:px-6 py-3 sm:py-4 max-w-[130px] sm:max-w-xs md:max-w-sm truncate">
           <div className="font-semibold text-sm sm:text-base text-neutral-900 dark:text-neutral-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">

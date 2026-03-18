@@ -112,6 +112,7 @@ class KayaRanker:
                 self.users[uid] = {
                     'name': f"{u_data['fname']} {u_data['lname']}",
                     'username': u_data['username'],
+                    'photo_url': u_data.get('photo_url'),
                     'sends': [],
                     'rating': 0,
                     'max_base_grade': 0
@@ -193,6 +194,7 @@ class KayaRanker:
                 'user_id': uid,
                 'username': user['username'],
                 'name': user['name'],
+                'photo_url': user.get('photo_url'),
                 'score': int(user['rating']),
                 'top_send': max([self.climbs[cid]['grade_name'] for cid in user['sends']], key=lambda x: parse_grade_to_points(x)),
                 'total_sends': len(user['sends']),

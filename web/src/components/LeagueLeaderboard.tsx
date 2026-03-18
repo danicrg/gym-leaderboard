@@ -19,6 +19,7 @@ type Climber = {
   total_sends: number;
   grade_pyramid: Record<string, number>;
   sends: Array<{ name: string; grade: string; rating: number }>;
+  photo_url?: string;
 };
 
 type LeagueData = {
@@ -125,15 +126,24 @@ function Row({ climber }: { climber: Climber }) {
       >
         <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap w-12 sm:w-auto">
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className={cn(
-              "flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full font-bold text-xs sm:text-sm",
-              climber.tier_rank === 1 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500" :
-              climber.tier_rank === 2 ? "bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300" :
-              climber.tier_rank === 3 ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" :
-              "text-neutral-500 dark:text-neutral-400 font-medium"
-            )}>
-              {climber.tier_rank}
-            </span>
+            <div className="relative">
+              {climber.photo_url ? (
+                <img src={climber.photo_url} alt={climber.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shadow-sm border border-neutral-200 dark:border-neutral-700" />
+              ) : (
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shadow-sm border border-neutral-200 dark:border-neutral-700">
+                  <span className="text-neutral-500 dark:text-neutral-400 font-bold text-xs">{climber.name.charAt(0)}</span>
+                </div>
+              )}
+              <span className={cn(
+                "absolute -bottom-1 -right-1 flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full font-bold text-[9px] sm:text-[10px] border border-white dark:border-neutral-900 shadow-sm",
+                climber.tier_rank === 1 ? "bg-yellow-400 text-yellow-900" :
+                climber.tier_rank === 2 ? "bg-neutral-300 text-neutral-800" :
+                climber.tier_rank === 3 ? "bg-orange-400 text-orange-900" :
+                "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+              )}>
+                {climber.tier_rank}
+              </span>
+            </div>
           </div>
         </td>
         <td className="px-2 sm:px-6 py-3 sm:py-4 max-w-[130px] sm:max-w-xs md:max-w-sm truncate">
