@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Trophy, TrendingUp, TrendingDown, Layers, Flame, User, SearchX } from 'lucide-react';
+import { Search, Trophy, TrendingUp, Layers, User, SearchX } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -101,19 +101,7 @@ export default function LiveLeaderboard() {
 
   const handleLoadMore = () => setVisibleCount(c => c + 50);
 
-  // Podium
-  const podiumTop3 = !isFiltering && data.length >= 3 ? data.slice(0, 3) : [];
-  
-  // Movers
-  const movers = useMemo(() => {
-    if (isFiltering || data.length < 10) return { risers: [], fallers: [] };
-    const numeric = data.filter(r => typeof r.movement === 'number' && r.movement !== 0);
-    const risers = [...numeric].sort((a, b) => (b.movement as number) - (a.movement as number)).slice(0, 3);
-    const fallers = [...numeric].sort((a, b) => (a.movement as number) - (b.movement as number)).slice(0, 3);
-    return { risers, fallers };
-  }, [data, isFiltering]);
 
-  const cotw = metadata?.climb_of_the_week;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -137,87 +125,7 @@ export default function LiveLeaderboard() {
         </div>
       </div>
 
-      {!isFiltering && cotw && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-4 sm:p-5 flex items-center gap-4 sm:gap-5 shadow-sm">
-          <div className="bg-white dark:bg-black/20 p-3 rounded-full shadow-sm shrink-0">
-            <Flame className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 dark:text-orange-400" />
-          </div>
-          <div>
-            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-0.5">Climb of the Week</div>
-            <div className="text-base sm:text-lg font-bold text-neutral-900 dark:text-neutral-100">{cotw.name}</div>
-            <div className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1 flex flex-wrap gap-x-3 gap-y-1">
-              <span className="font-semibold">{cotw.grade.toUpperCase()}</span>
-              <span className="opacity-50">•</span>
-              <span>Rating: {cotw.adjusted_rating}</span>
-              <span className="opacity-50">•</span>
-              <span>{cotw.num_senders} sender{cotw.num_senders !== 1 ? 's' : ''}</span>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Podium */}
-      {podiumTop3.length === 3 && (
-         <div className="flex justify-center items-end gap-2 sm:gap-4 my-8 min-h-[160px] sm:min-h-[180px]">
-           {[1, 0, 2].map((idx) => {
-             const r = podiumTop3[idx];
-             const isGold = idx === 0;
-             const isSilver = idx === 1;
-             return (
-               <div key={r.username} className={cn(
-                 "flex-1 max-w-[160px] sm:max-w-[200px] rounded-2xl p-3 sm:p-4 text-center border shadow-sm relative transition-transform hover:-translate-y-1",
-                 isGold ? "bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/20 border-yellow-300 dark:border-yellow-700 h-[140px] sm:h-[160px] z-10 scale-105" :
-                 isSilver ? "bg-gradient-to-br from-slate-50 to-slate-200 dark:from-slate-800 dark:to-slate-900 border-slate-300 dark:border-slate-700 h-[120px] sm:h-[130px]" :
-                 "bg-gradient-to-br from-orange-50 to-orange-100/80 dark:from-orange-950/40 dark:to-orange-900/30 border-orange-200 dark:border-orange-800 h-[110px] sm:h-[120px]"
-               )}>
-                 <div className="text-2xl sm:text-3xl mb-1 sm:mb-2 -mt-6 sm:-mt-8 drop-shadow-md">
-                   {isGold ? '🥇' : isSilver ? '🥈' : '🥉'}
-                 </div>
-                 <div className="font-bold text-xs sm:text-sm truncate text-neutral-900 dark:text-neutral-100">{r.name}</div>
-                 <div className="text-[9px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 truncate mb-1 sm:mb-2">@{r.username}</div>
-                 <div className="font-mono font-bold text-sm sm:text-base text-neutral-900 dark:text-neutral-100">{r.score}</div>
-               </div>
-             )
-           })}
-         </div>
-      )}
-
-      {/* Movers */}
-      {!isFiltering && movers.risers.length > 0 && (
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-           {/* Risers */}
-           <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl p-4 shadow-sm">
-             <div className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-500 mb-3 flex items-center gap-1.5">
-               <TrendingUp className="w-4 h-4" /> Biggest Risers
-             </div>
-             <div className="space-y-2">
-               {movers.risers.map(r => (
-                 <div key={r.username} className="flex justify-between items-center text-sm py-1 border-b border-neutral-100 dark:border-neutral-700/50 last:border-0">
-                   <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate pr-2">{r.name}</span>
-                   <span className="font-bold text-green-600 dark:text-green-500 shrink-0">▲ {r.movement}</span>
-                 </div>
-               ))}
-             </div>
-           </div>
-           
-           {/* Fallers */}
-           {movers.fallers.length > 0 && (
-              <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl p-4 shadow-sm">
-              <div className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-500 mb-3 flex items-center gap-1.5">
-                <TrendingDown className="w-4 h-4" /> Biggest Fallers
-              </div>
-              <div className="space-y-2">
-                {movers.fallers.map(r => (
-                  <div key={r.username} className="flex justify-between items-center text-sm py-1 border-b border-neutral-100 dark:border-neutral-700/50 last:border-0">
-                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate pr-2">{r.name}</span>
-                    <span className="font-bold text-red-600 dark:text-red-500 shrink-0">▼ {Math.abs(r.movement as number)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-           )}
-         </div>
-      )}
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-3">
