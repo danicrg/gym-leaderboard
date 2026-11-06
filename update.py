@@ -34,6 +34,7 @@ CONSTANTS = {
 }
 
 DATA_FILE = 'data/raw_ascents.json'
+RAW_RETENTION_DAYS = 60
 LEADERBOARD_FILE = 'data/leaderboard.json'
 HISTORY_FILE = 'data/history.json'
 TIME_WINDOWS = [7, 14, 30]
@@ -238,88 +239,195 @@ class KayaRanker:
         candidates.sort(key=lambda x: x['adjusted_rating'], reverse=True)
         return candidates[0]
 
-# --- SCRAPING LOGIC (EXACT REPLICA) ---
+# --- SCRAPING LOGIC ---
+#
+# Kaya's list endpoints reject count > 50 ("Count Limit Exceeded") and
+# offset > 150 ("Offset Limit Exceeded"), so any list only exposes its newest
+# 200 items. For the gym feed that is ~1.5-2 days of ascents: if the stored data
+# is older than that (missed/failed runs, busy weekend), the gap cannot be read
+# from the gym feed and is backfilled from per-climber feeds instead.
 
-def get_data_batch(offset, max_retries=20):
-    """Exact logic from original script for a single batch."""
-    json_data = {
-        'operationName': 'webAscentsForGym',
-        'variables': {
-            'gym_id': GYM_ID,
-            'offset': offset,
-            'count': 15,
-        },
-        'query': GRAPHQL_QUERY,
-    }
+API_URL = 'https://kaya-beta.kayaclimb.com/graphql'
+PAGE_SIZE = 50
+MAX_OFFSET = 150
+LIMIT_ERRORS = ('Offset Limit Exceeded', 'Count Limit Exceeded')
+MIN_REQUEST_INTERVAL = 1.0      # seconds; bursts above ~1 req/s get "Error. Try again later."
+MAX_BACKFILL_FAILURE_RATE = 0.02
 
-    # Retry Loop
+_FRAGMENTS = GRAPHQL_QUERY[GRAPHQL_QUERY.index('fragment '):]
+
+# Same ascent shape as GRAPHQL_QUERY, plus the climb's gym id (aliased, stripped
+# before storing) so ascents at other gyms can be filtered out.
+USER_ASCENTS_QUERY = (
+    'query webAscentsForUser($user_id: ID!, $count: Int!, $offset: Int!) {\n'
+    '  webAscentsForUser(user_id: $user_id, count: $count, offset: $offset) {\n'
+    '    ...WebAscentFields\n'
+    '    gym_check: climb {\n      gym {\n        id\n      }\n    }\n'
+    '    __typename\n'
+    '  }\n'
+    '}\n\n' + _FRAGMENTS
+)
+# Only used to discover climbers who are not in the stored data yet.
+# webClimbsForGym returns the gym's 200 most-ascended climbs.
+CLIMBS_QUERY = (
+    'query webClimbsForGym($gym_id: ID!, $count: Int!, $offset: Int!) {\n'
+    '  webClimbsForGym(gym_id: $gym_id, count: $count, offset: $offset) { id }\n'
+    '}\n'
+)
+CLIMB_CLIMBERS_QUERY = (
+    'query webAscentsForClimb($climb_id: ID!, $count: Int!, $offset: Int!) {\n'
+    '  webAscentsForClimb(climb_id: $climb_id, count: $count, offset: $offset) { date user { id } }\n'
+    '}\n'
+)
+
+
+class KayaLimitError(Exception):
+    """Server-side pagination cap hit — retrying will never help."""
+
+
+class KayaFetchError(Exception):
+    """Request still failing after all retries (or failing in a non-retryable way)."""
+
+
+_last_request_at = 0.0
+
+
+def graphql(operation, query, variables, max_retries=6):
+    """POST one GraphQL operation, with throttling and capped exponential backoff."""
+    global _last_request_at
+    payload = {'operationName': operation, 'variables': variables, 'query': query}
+
     for attempt in range(max_retries):
+        wait = _last_request_at + MIN_REQUEST_INTERVAL - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        _last_request_at = time.monotonic()
         try:
-            response = requests.post('https://kaya-beta.kayaclimb.com/graphql', headers=headers, json=json_data)
-            log.debug("POST offset=%d -> HTTP %d (%.0fms)", offset, response.status_code,
-                       response.elapsed.total_seconds() * 1000)
-            response.raise_for_status() 
-            
-            # 2. Parse JSON
+            response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+            log.debug("POST %s %s -> HTTP %d (%.0fms)", operation, variables, response.status_code,
+                      response.elapsed.total_seconds() * 1000)
+            if 400 <= response.status_code < 500 and response.status_code != 429:
+                raise KayaFetchError(f"{operation}: HTTP {response.status_code}: {response.text[:300]}")
+            response.raise_for_status()
+
             res_json = response.json()
+            errors = res_json.get('errors')
+            if errors:
+                messages = [e.get('message', '') for e in errors]
+                if any(m in LIMIT_ERRORS for m in messages):
+                    raise KayaLimitError('; '.join(messages))
+                raise ValueError(f"GraphQL Error: {errors}")
+            if res_json.get('data') is None:
+                raise ValueError("GraphQL response has no data")
+            return res_json['data']
 
-            # 3. Check for GraphQL specific errors
-            if 'errors' in res_json or res_json.get('data') is None:
-                raise ValueError(f"GraphQL Error: {res_json.get('errors')}")
-
-            return res_json['data']['webAscentsForGym']
-
+        except (KayaLimitError, KayaFetchError):
+            raise
         except Exception as e:
             if attempt == max_retries - 1:
-                log.error("Failed offset %d after %d attempts: %s", offset, max_retries, e)
-                return []
-
-            sleep_time = (2 ** attempt) + random.uniform(0, 1)
-            log.warning("Error at offset %d (attempt %d/%d): %s — retrying in %.2fs",
-                        offset, attempt + 1, max_retries, e, sleep_time)
+                raise KayaFetchError(f"{operation} {variables} failed after {max_retries} attempts: {e}") from e
+            sleep_time = min(2 ** (attempt + 1), 30) + random.uniform(0, 1)
+            log.warning("Error on %s %s (attempt %d/%d): %s — retrying in %.2fs",
+                        operation, variables, attempt + 1, max_retries, e, sleep_time)
             time.sleep(sleep_time)
-    return []
+
+
+def fetch_pages(operation, query, variables, since=None, max_retries=6):
+    """
+    Page through a newest-first Kaya list until a page reaches `since`, the list
+    ends, or the server's pagination cap is hit.
+    Returns (items, truncated): truncated=True means the cap was hit before
+    reaching `since`/the end, i.e. older items exist that we could not read.
+    """
+    items = []
+    for offset in range(0, MAX_OFFSET + 1, PAGE_SIZE):
+        try:
+            data = graphql(operation, query, {**variables, 'count': PAGE_SIZE, 'offset': offset}, max_retries)
+        except KayaLimitError as e:
+            log.warning("%s hit the server pagination cap at offset %d: %s", operation, offset, e)
+            return items, True
+        batch = data[operation] or []
+        items.extend(batch)
+        if len(batch) < PAGE_SIZE:
+            return items, False
+        if since and min(x['date'] for x in batch) <= since:
+            return items, False
+    return items, True
+
 
 def fetch_incremental_data(latest_stored_date):
     """
-    Loops using get_data_batch until it hits data we already have.
+    Reads the gym feed back to data we already have.
+    Returns (new_items, gap): gap=True if the feed's cap was hit before reaching
+    stored data, so ascents between `latest_stored_date` and the oldest reachable
+    one are missing and need backfill_gap().
     """
-    new_data = []
-    offset = 0
-    keep_fetching = True
     fetch_start = time.monotonic()
-    
     log.info("Starting incremental fetch — looking for data newer than: %s", latest_stored_date)
 
-    while keep_fetching:
-        batch = get_data_batch(offset)
-        
-        if not batch:
-            log.info("Empty batch at offset %d — ending fetch", offset)
-            break
-        
-        log.info("Got %d items at offset %d", len(batch), offset)
-            
-        for item in batch:
-            item_date = item['date']
-            if latest_stored_date and item_date <= latest_stored_date:
-                keep_fetching = False
-            else:
-                new_data.append(item)
-        
-        if not keep_fetching:
-            log.info("Reached existing data at offset %d — stopping fetch", offset)
-            break
+    items, gap = fetch_pages('webAscentsForGym', GRAPHQL_QUERY, {'gym_id': GYM_ID}, since=latest_stored_date)
+    new_data = [x for x in items if not latest_stored_date or x['date'] > latest_stored_date]
 
-        offset += 15
-        
-        if offset > 10000: 
-            log.warning("Safety limit reached at offset %d — aborting fetch", offset)
-            break
-    
-    elapsed = time.monotonic() - fetch_start
-    log.info("Fetch complete: %d new items in %.1fs", len(new_data), elapsed)
-    return new_data
+    if gap:
+        log.warning("Gym feed cap reached after %d ascents (oldest reachable: %s) without reaching stored data",
+                    len(items), items[-1]['date'] if items else None)
+    else:
+        log.info("Reached existing data / end of feed after %d ascents", len(items))
+    log.info("Fetch complete: %d new items in %.1fs", len(new_data), time.monotonic() - fetch_start)
+    return new_data, gap
+
+
+def discover_climber_ids(since):
+    """Best effort: ids of climbers with ascents since `since` on the gym's popular climbs."""
+    climbs, _ = fetch_pages('webClimbsForGym', CLIMBS_QUERY, {'gym_id': GYM_ID})
+    climber_ids = set()
+    failed = 0
+    for climb in climbs:
+        try:
+            ascents, _ = fetch_pages('webAscentsForClimb', CLIMB_CLIMBERS_QUERY,
+                                     {'climb_id': climb['id']}, since=since, max_retries=4)
+        except KayaFetchError as e:
+            failed += 1
+            log.debug("Skipping climb %s during discovery: %s", climb['id'], e)
+            continue
+        climber_ids.update(a['user']['id'] for a in ascents if a.get('user') and a['date'] > since)
+    log.info("Discovery: %d climbers active since %s on %d climbs (%d climbs failed, skipped)",
+             len(climber_ids), since, len(climbs), failed)
+    return climber_ids
+
+
+def backfill_gap(since, known_climber_ids):
+    """Recover this gym's ascents newer than `since` from per-climber feeds."""
+    start = time.monotonic()
+    log.warning("Backfilling ascents since %s from per-climber feeds", since)
+
+    climber_ids = sorted(set(known_climber_ids) | discover_climber_ids(since))
+    found = {}
+    failed = []
+    truncated = 0
+    for i, uid in enumerate(climber_ids, 1):
+        try:
+            ascents, capped = fetch_pages('webAscentsForUser', USER_ASCENTS_QUERY, {'user_id': uid}, since=since)
+        except KayaFetchError as e:
+            failed.append(uid)
+            log.warning("Backfill failed for climber %s: %s", uid, e)
+            continue
+        truncated += capped
+        for a in ascents:
+            gym = (a.pop('gym_check', None) or {}).get('gym') or {}
+            if str(gym.get('id')) == str(GYM_ID) and a['date'] > since:
+                found[a['id']] = a
+        if i % 50 == 0:
+            log.info("Backfill progress: %d/%d climbers, %d ascents so far", i, len(climber_ids), len(found))
+
+    if climber_ids and len(failed) / len(climber_ids) > MAX_BACKFILL_FAILURE_RATE:
+        raise KayaFetchError(f"Backfill failed for {len(failed)}/{len(climber_ids)} climbers — "
+                             "aborting without saving so the next run retries the whole gap")
+    log.info("Backfill complete: %d ascents from %d climbers in %.1fs "
+             "(%d climbers failed, %d had >%d ascents since %s and were truncated)",
+             len(found), len(climber_ids), time.monotonic() - start,
+             len(failed), truncated, MAX_OFFSET + PAGE_SIZE, since)
+    return list(found.values())
 
 # --- MAIN EXECUTION ---
 
@@ -348,8 +456,15 @@ def main():
     log.info("Latest stored date: %s", latest_date or "(none)")
 
     # 3. Fetch Updates (Incremental)
-    new_ascents = fetch_incremental_data(latest_date)
+    new_ascents, gap = fetch_incremental_data(latest_date)
     log.info("Fetched %d new ascents", len(new_ascents))
+
+    # 3b. Backfill if the gym feed could not reach back to the stored data
+    if gap:
+        retention_cutoff = (datetime.now(timezone.utc) - timedelta(days=RAW_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        since = max(latest_date or retention_cutoff, retention_cutoff)
+        known_climbers = {a['user']['id'] for a in all_ascents + new_ascents if a.get('user')}
+        new_ascents += backfill_gap(since, known_climbers)
     
     # 4. Merge and Deduplicate
     before_merge = len(all_ascents)
@@ -361,7 +476,7 @@ def main():
     log.info("Merged: %d existing + %d new = %d unique ascents", before_merge, len(new_ascents), len(final_data))
     
     # 5. Clean up old data (keep last 60 days to reduce file size)
-    cleanup_date = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
+    cleanup_date = (datetime.now(timezone.utc) - timedelta(days=RAW_RETENTION_DAYS)).isoformat()
     pre_cleanup = len(final_data)
     final_data = [x for x in final_data if x['date'].replace('Z', '+00:00') > cleanup_date]
     log.info("Cleanup: removed %d ascents older than 60 days, %d remaining", pre_cleanup - len(final_data), len(final_data))

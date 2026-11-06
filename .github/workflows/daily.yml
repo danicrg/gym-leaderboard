@@ -9,17 +9,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Normal runs take seconds; a gap backfill (after missed runs) took ~30 min locally
+    timeout-minutes: 120
+    concurrency:
+      group: leaderboard-update
+      cancel-in-progress: false
     permissions:
       contents: write # Needed to push changes
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.9'
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
@@ -33,7 +38,7 @@ jobs:
         run: python update.py
 
       - name: Commit and Push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Daily Leaderboard Update"
           file_pattern: "data/*.json"
