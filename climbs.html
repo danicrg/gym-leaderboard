@@ -345,6 +345,9 @@
     </div>
 
     <script>
+        // Kaya web climb pages are /climb/<slug>. The trailing number in a slug is NOT the climb id,
+        // so share/climb?climb_id=<that number> resolves to nothing.
+        const kayaClimbUrl = slug => `https://kaya-app.kayaclimb.com/climb/${encodeURIComponent(slug)}`;
         (function initTheme() {
             const saved = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -389,8 +392,7 @@
                 let diffClass = 'neutral', diffText = '—';
                 if (diff > 0) { diffClass = 'up'; diffText = `+${diff}`; }
                 else if (diff < 0) { diffClass = 'down'; diffText = `${diff}`; }
-                const climbId = c.slug ? (c.slug.match(/(\d+)$/) || [])[1] : '';
-                const climbUrl = climbId ? `https://app.kayaclimb.com/share/climb?climb_id=${climbId}` : `https://kaya-app.kayaclimb.com/climb/${c.slug || ''}`;
+                const climbUrl = kayaClimbUrl(c.slug || '');
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `

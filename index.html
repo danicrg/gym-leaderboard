@@ -785,6 +785,9 @@
     </div>
 
     <script>
+        // Kaya web climb pages are /climb/<slug>. The trailing number in a slug is NOT the climb id,
+        // so share/climb?climb_id=<that number> resolves to nothing.
+        const kayaClimbUrl = slug => `https://kaya-app.kayaclimb.com/climb/${encodeURIComponent(slug)}`;
         // Theme
         (function initTheme() {
             const saved = localStorage.getItem('theme');
@@ -924,7 +927,7 @@
                 const items = row.sends.map(s => `
                     <div class="send-item">
                         <span class="send-grade">${s.grade.toUpperCase()}</span>
-                        <span class="send-name">${s.slug ? (() => { const m = s.slug.match(/(\d+)$/); const u = m ? `https://app.kayaclimb.com/share/climb?climb_id=${m[1]}` : `https://kaya-app.kayaclimb.com/climb/${s.slug}`; return `<a href="${u}" target="_blank" rel="noopener" style="color:var(--accent)">${s.name}</a>`; })() : s.name}</span>
+                        <span class="send-name">${s.slug ? `<a href="${kayaClimbUrl(s.slug)}" target="_blank" rel="noopener" style="color:var(--accent)">${s.name}</a>` : s.name}</span>
                         <span class="send-rating">${s.rating} pts</span>
                     </div>
                 `).join('');
@@ -1037,7 +1040,7 @@
                         <div class="cotw-icon">🔥</div>
                         <div>
                             <div class="cotw-label">Climb of the Week</div>
-                            <div class="cotw-name">${c.slug ? (() => { const m = c.slug.match(/(\d+)$/); const u = m ? `https://app.kayaclimb.com/share/climb?climb_id=${m[1]}` : `https://kaya-app.kayaclimb.com/climb/${c.slug}`; return `<a href="${u}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">${c.name}</a>`; })() : c.name}</div>
+                            <div class="cotw-name">${c.slug ? `<a href="${kayaClimbUrl(c.slug)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">${c.name}</a>` : c.name}</div>
                             <div class="cotw-detail">${c.grade.toUpperCase()} • Rating: ${c.adjusted_rating} • ${c.num_senders} sender${c.num_senders !== 1 ? 's' : ''}</div>
                         </div>
                     </div>`;
